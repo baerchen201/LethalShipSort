@@ -83,16 +83,17 @@ public class SortItemsCommand : Command
             return false;
 
         var scrap = items.Where(i => i.itemProperties.isScrap).ToArray();
-        var tools = items.Where(i => !i.itemProperties.isScrap).ToArray();
-
         int scrapFailed = 0;
+        int toolsFailed = 0;
         if (scrap.Length != 0)
             scrapFailed = SortItems(scrap, ScrapPositions);
-        int toolsFailed = 0;
+        goto _;
+        var tools = items.Where(i => !i.itemProperties.isScrap).ToArray();
         // ReSharper disable once InvertIf
         if (tools.Length != 0)
             toolsFailed = SortItems(tools, ToolPositions);
 
+        _:
         error =
             $"{(scrapFailed > 0 ? $"{scrapFailed} scrap items {(toolsFailed > 0 ? "and " : "")}" : "")}{(toolsFailed > 0 ? $"{toolsFailed} tool items" : "")} couldn't be sorted";
 
