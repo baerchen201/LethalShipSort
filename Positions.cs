@@ -1,49 +1,50 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Random = System.Random;
 
 namespace LethalShipSort;
 
 public static class Positions
 {
-    public const float Y = 2f;
+    public static Vector3 Randomize(Vector3 position, float maxDistance = 0.05f)
+    {
+        if (maxDistance <= 0)
+            throw new ArgumentException("Invalid maxDistance (must be positive)");
+        Random rng = new();
+        return new Vector3(
+            position.x + (float)rng.NextDouble() * maxDistance * 2 - maxDistance,
+            position.y,
+            position.z + (float)rng.NextDouble() * maxDistance * 2 - maxDistance
+        );
+    }
 
-    public static readonly (float, float)[] SCRAP_POSITIONS =
-    [
-        (-1.96f, -5.26f),
-        (1.75f, -5.96f),
-        (-6.32f, -7.1f),
-        (-2.45f, -6.87f),
-        (-3.14f, -5.85f),
-        (1.62f, -6.73f),
-        (-3.92f, -7f),
-        (-3.33f, -6.91f),
-        (-4.08f, -6.46f),
-        (-5.03f, -7.11f),
-        (-3.48f, -4.93f),
-        (-5.9f, -4.88f),
-        (-6.34f, -7.7f),
-        (-1.25f, -8.46f),
-        (1.29f, -8.36f),
-        (-0.06f, -5.52f),
-        (-1.88f, -6.16f),
-        (8.38f, -6.48f),
-        (-3.93f, -7.45f),
-        (-4.95f, -7.78f),
-        (-3.57f, -8.46f),
-        (6.32f, -5.13f),
-        (-4.98f, -6.25f),
-        (-4.48f, -5.54f),
-        (-0.25f, -8.45f),
-        (-1.8f, -7.05f),
-        (-6.34f, -6.85f),
-        (-6.2f, -6.11f),
-        (2.86f, -6.08f),
-        (8.46f, -7.7f),
-    ];
-    public static readonly (float, float)[] TOOL_POSITIONS = [(0, 0)];
+    public static Vector3 GetPosition() => GetPosition(null!, false);
 
+    public static Vector3 GetPosition(string name, bool twoHanded = false) =>
+        // ReSharper disable once NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract
+        Utils.RemoveClone(name ?? "") switch
+        {
+            "SoccerBall" => new Vector3(-6.8f, 4.4f, -7.75f),
+            "LungApparatusTurnedOff" => new Vector3(-6.8f, 4.4f, -6.65f),
+            "RedLocustHive" => new Vector3(-6.8f, 4.4f, -5.65f),
+            "WhoopieCushion" => new Vector3(9f, 2f, -8.25f),
+            _ => twoHanded ? new Vector3(-4.5f, 3f, -5.25f) : new Vector3(-2.25f, 2f, -5.25f),
+        };
+
+    public static Vector3 GetToolPosition(string name) =>
+        new Vector3(FALLBACK_POSITION.Item1, 2f, FALLBACK_POSITION.Item2);
+
+    public static Vector3 GetPosition(GrabbableObject item) =>
+        item.itemProperties.isScrap
+            ? GetPosition(item.name, item.itemProperties.twoHanded)
+            : GetToolPosition(item.name);
+
+    [Obsolete("Use GetPosition() instead")]
     public static readonly (float, float) FALLBACK_POSITION = (2.86f, -6.08f);
-    public static readonly Dictionary<string, (float, float)> NAMED_POSITIONS = new() // Incomplete TODO: add missing items
+
+    [Obsolete("Use GetPosition(item.name, item.itemProperties.twoHanded) instead")]
+    public static readonly Dictionary<string, (float, float)> NAMED_POSITIONS = new() // Incomplete
     {
         ["Hairdryer"] = (-1.96f, -5.26f),
         ["Hairbrush"] = (1.75f, -5.96f),
@@ -94,6 +95,7 @@ public static class Positions
     };
 }
 
+[Obsolete]
 internal static class ItemList
 {
     internal static readonly Dictionary<string, Vector3> GoodItems = new Dictionary<string, Vector3>
