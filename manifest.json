@@ -1,6 +1,6 @@
 {
   "name": "ShipSort",
-  "version_number": "1.2.1",
+  "version_number": "1.3.0",
   "website_url": "https://github.com/baerchen201/LethalShipSort",
   "description": "sorts your ship",
   "dependencies": [
