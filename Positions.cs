@@ -32,8 +32,34 @@ public static class Positions
             _ => twoHanded ? new Vector3(-4.5f, 3f, -5.25f) : new Vector3(-2.25f, 2f, -5.25f),
         };
 
+    private const float FLOOR_ABOVE = 3.2f;
+    private const float FLOOR_TOP = 2.4f;
+    private const float FLOOR_MIDDLE_1 = 2f;
+    private const float FLOOR_MIDDLE_2 = 1.5f;
+    private const float FLOOR_BOTTOM = 0.5f;
+
     public static Vector3 GetToolPosition(string name) =>
-        new Vector3(FALLBACK_POSITION.Item1, 2f, FALLBACK_POSITION.Item2);
+        Utils.RemoveClone(name) switch
+        {
+            "ShovelItem" => new Vector3(-1.5f, 0.3f, FLOOR_MIDDLE_2),
+            "Key" => new Vector3(-0.3f, 0.6f, FLOOR_MIDDLE_2),
+            "ShotgunShell" => new Vector3(-0.3f, 0.6f, FLOOR_MIDDLE_1),
+            "Boombox" => new Vector3(-0.3f, 0.5f, FLOOR_ABOVE),
+            "JetpackItem" => new Vector3(-0.3f, 0.2f, FLOOR_BOTTOM),
+
+            "WeedKillerItem" => new Vector3(-2.05f, 0.5f, FLOOR_MIDDLE_1),
+            "SprayPaintItem" => new Vector3(-1.7f, 0.5f, FLOOR_MIDDLE_1),
+            "BBFlashlight" => new Vector3(-1.3f, 0.2f, FLOOR_MIDDLE_1),
+            "FlashlightItem" => new Vector3(-1.3f, 0.65f, FLOOR_MIDDLE_1),
+            "StunGrenade" => new Vector3(-1.2f, 0.5f, FLOOR_MIDDLE_1),
+            "TZPChemical" => new Vector3(-0.55f, 0.2f, FLOOR_MIDDLE_1),
+
+            "LockPickerItem" => new Vector3(-2f, 0.5f, FLOOR_TOP),
+            "WalkieTalkie" => new Vector3(-1.4f, 0.6f, FLOOR_TOP),
+            "PatcherGunItem" => new Vector3(-1.1f, 0.6f, FLOOR_TOP),
+            "BeltBagItem" => new Vector3(-0.35f, 0.5f, FLOOR_TOP - 0.1f),
+            _ => new Vector3(-2f, 0.6f, FLOOR_BOTTOM),
+        };
 
     public static Vector3 GetPosition(GrabbableObject item) =>
         item.itemProperties.isScrap

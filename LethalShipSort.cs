@@ -67,7 +67,7 @@ public class SortItemsCommand : Command
     }
 
     public static int SortItems(GrabbableObject[] items) =>
-        items.Count(item => !Utils.MoveItem(item, Positions.GetPosition(item)));
+        items.Count(item => !Utils.MoveItem(item));
 }
 
 public static class Utils
@@ -76,6 +76,13 @@ public static class Utils
 
     public static string RemoveClone(string name) =>
         name.EndsWith(CLONE) ? name[..^CLONE.Length] : name;
+
+    public static bool MoveItem(GrabbableObject item)
+    {
+        return item.itemProperties.isScrap
+            ? MoveItem(item, Positions.GetPosition(item))
+            : MoveItemToCloset(item, Positions.GetPosition(item));
+    }
 
     public static bool MoveItem(GrabbableObject item, Vector3 position)
     {
@@ -122,6 +129,71 @@ public static class Utils
             true,
             position,
             -1
+        );
+        return true;
+    }
+
+    public static bool MoveItemToCloset(GrabbableObject item, Vector3 position)
+    {
+        LethalShipSort.Logger.LogDebug(
+            $">> Moving item {RemoveClone(item.name)} to position {position} in closet"
+        );
+        Transform closet = GameObject.Find("Environment/HangarShip/StorageCloset").transform;
+        if (closet != null)
+            if (
+                Physics.Raycast(
+                    closet.TransformPoint(position),
+                    Vector3.down,
+                    out var hitInfo,
+                    80f,
+                    1073744640,
+                    QueryTriggerInteraction.Ignore
+                )
+            )
+                position = closet.InverseTransformPoint(
+                    Positions.Randomize(
+                        hitInfo.point
+                            + item.itemProperties.verticalOffset * Vector3.up
+                            - new Vector3(0f, 0.05f, 0f),
+                        0.02f
+                    )
+                );
+            else
+            {
+                LethalShipSort.Logger.LogWarning("   Raycast unsuccessful");
+                return false;
+            }
+        else
+        {
+            LethalShipSort.Logger.LogWarning("   Couldn't find closet");
+            return false;
+        }
+
+        GameNetworkManager.Instance.localPlayerController.SetObjectAsNoLongerHeld(
+            true,
+            true,
+            position,
+            item,
+            0
+        );
+        GameNetworkManager.Instance.localPlayerController.ThrowObjectServerRpc(
+            item.NetworkObject,
+            true,
+            true,
+            position,
+            0
+        );
+        GameNetworkManager.Instance.localPlayerController.PlaceGrabbableObject(
+            closet,
+            position,
+            false,
+            item
+        );
+        GameNetworkManager.Instance.localPlayerController.PlaceObjectServerRpc(
+            item.NetworkObject,
+            closet.gameObject,
+            position,
+            false
         );
         return true;
     }
