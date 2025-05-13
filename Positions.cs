@@ -41,6 +41,57 @@ public static class Positions
         (8.46f, -7.7f),
     ];
     public static readonly (float, float)[] TOOL_POSITIONS = [(0, 0)];
+
+    public static readonly (float, float) FALLBACK_POSITION = (2.86f, -6.08f);
+    public static readonly Dictionary<string, (float, float)> NAMED_POSITIONS = new() // Incomplete TODO: add missing items
+    {
+        ["Hairdryer"] = (-1.96f, -5.26f),
+        ["Hairbrush"] = (1.75f, -5.96f),
+        ["EasterEgg"] = (-6.32f, -7.1f),
+        ["Mug"] = (-2.45f, -6.87f),
+        ["Dentures"] = (-3.14f, -5.85f),
+        ["FancyLamp"] = (1.62f, -6.73f),
+        ["ComedyMask"] = (-3.92f, -7f),
+        ["FancyRing"] = (-3.33f, -6.91f),
+        ["TragedyMask"] = (-4.08f, -6.46f),
+        ["BinFullOfBottles"] = (-5.03f, -7.11f),
+        ["ToyCube"] = (-3.48f, -4.93f),
+        ["FancyGlass"] = (-5.9f, -4.88f),
+        ["FishTestProp"] = (-6.34f, -7.7f),
+        ["PerfumeBottle"] = (-1.25f, -8.46f),
+        ["Painting"] = (1.29f, -8.36f),
+        ["Airhorn"] = (-0.06f, -5.52f),
+        ["RedSodaCan"] = (-1.88f, -6.16f),
+        ["RubberDucky"] = (8.38f, -6.48f),
+        ["MagnifyingGlass"] = (-3.93f, -7.45f),
+        ["Toothpaste"] = (-4.95f, -7.78f),
+        ["Candy"] = (-3.57f, -8.46f),
+        ["RedLocustHive"] = (6.32f, -5.13f),
+        ["TeaKettle"] = (-4.98f, -6.25f),
+        ["HandBell"] = (-4.48f, -5.54f),
+        ["RobotToy"] = (-0.25f, -8.45f),
+        ["Clownhorn"] = (-0.06f, -5.52f),
+        ["OldPhone"] = (-1.8f, -7.05f),
+        ["LaserPointer"] = (-6.34f, -6.85f),
+        ["Magic7Ball"] = (-6.2f, -6.11f),
+
+        ["StopSign"] = (2.86f, -6.08f),
+        ["YieldSign"] = (2.86f, -6.08f),
+        ["CookieMoldPan"] = (2.86f, -6.08f),
+        ["DiyFlashbang"] = (2.86f, -6.08f),
+        ["PillBottle"] = (2.86f, -6.08f),
+        ["Dustpan"] = (2.86f, -6.08f),
+        ["SteeringWheel"] = (2.86f, -6.08f),
+        ["Remote"] = (2.86f, -6.08f),
+        ["ChemicalJug"] = (2.86f, -6.08f),
+        ["Flask"] = (2.86f, -6.08f),
+        ["EnginePart"] = (2.86f, -6.08f),
+        ["EggBeater"] = (2.86f, -6.08f),
+        ["BigBolt"] = (2.86f, -6.08f),
+        ["MetalSheet"] = (2.86f, -6.08f),
+        ["WhoopieCushion"] = (8.46f, -7.7f),
+        ["Cog"] = (2.86f, -6.08f),
+    };
 }
 
 internal static class ItemList

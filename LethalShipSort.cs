@@ -11,6 +11,7 @@ using Unity.Netcode;
 using UnityEngine;
 using Logger = UnityEngine.Logger;
 using Object = UnityEngine.Object;
+using Random = System.Random;
 
 namespace LethalShipSort;
 
@@ -48,6 +49,14 @@ public class LethalShipSort : BaseUnityPlugin
 
 public class SortItemsCommand : Command
 {
+    public enum SORT_MODE
+    {
+        SORTED,
+        RANDOM,
+        NAMED,
+        Length,
+    }
+
     public override string Name => "SortItems";
     public override string[] Commands => [Name, "Sort", "Organize"];
     public override string Description => "Sorts all items on the ship";
@@ -56,7 +65,7 @@ public class SortItemsCommand : Command
     {
         error = "The ship must be in orbit";
         displayedWarning = false;
-        return StartOfRound.Instance.inShipPhase && SortAllItems(out error);
+        return StartOfRound.Instance.inShipPhase && SortAllItems(out error, SORT_MODE.NAMED);
     }
 
     public static readonly Vector3[] ScrapPositions = Positions
@@ -66,11 +75,26 @@ public class SortItemsCommand : Command
         .TOOL_POSITIONS.Select(i => new Vector3(i.Item1, Positions.Y, i.Item2))
         .ToArray();
 
+    public static readonly Vector3 FallbackPosition = new(
+        Positions.FALLBACK_POSITION.Item1,
+        Positions.Y,
+        Positions.FALLBACK_POSITION.Item2
+    );
+    public static readonly Dictionary<string, Vector3> NamedScrapPositions = Positions
+        .NAMED_POSITIONS.Select(kvp =>
+            (kvp.Key, new Vector3(kvp.Value.Item1, Positions.Y, kvp.Value.Item2))
+        )
+        .ToDictionary(kvp => kvp.Item1, kvp => kvp.Item2);
+
     private const string WARNING =
         "You have too many different items on the ship.\nSome items may be stacked on others";
+    private const string NAMED_WARNING =
+        "You have some items on the ship, that don't have a specified position.\nSome items may be stacked on others";
     private bool displayedWarning;
 
-    public bool SortAllItems(out string error)
+    private const string CLONE = "(Clone)";
+
+    public bool SortAllItems(out string error, SORT_MODE sortMode = SORT_MODE.SORTED)
     {
         error = "No items to sort";
         var items = Object.FindObjectsOfType<GrabbableObject>();
@@ -86,7 +110,11 @@ public class SortItemsCommand : Command
         int scrapFailed = 0;
         int toolsFailed = 0;
         if (scrap.Length != 0)
-            scrapFailed = SortItems(scrap, ScrapPositions);
+            scrapFailed = sortMode switch
+            {
+                SORT_MODE.NAMED => SortItems(scrap, NamedScrapPositions),
+                _ => SortItems(scrap, ScrapPositions, sortMode == SORT_MODE.SORTED),
+            };
         goto _;
         var tools = items.Where(i => !i.itemProperties.isScrap).ToArray();
         // ReSharper disable once InvertIf
@@ -100,18 +128,31 @@ public class SortItemsCommand : Command
         return scrapFailed == 0 && toolsFailed == 0;
     }
 
-    private int SortItems(GrabbableObject[] items, Vector3[] positions)
+    private int SortItems(GrabbableObject[] items, Vector3[] positions, bool sortBeforeSort = true)
     {
-        Array.Sort(items, (l, r) => new CaseInsensitiveComparer().Compare(l.name, r.name));
-        Array.Sort(
-            items,
-            (l, r) =>
-                l.itemProperties.twoHanded switch
-                {
-                    true => r.itemProperties.twoHanded ? 0 : -1,
-                    false => r.itemProperties.twoHanded ? 1 : 0,
-                }
-        );
+        if (sortBeforeSort)
+        {
+            Array.Sort(items, (l, r) => new CaseInsensitiveComparer().Compare(l.name, r.name));
+            Array.Sort(
+                items,
+                (l, r) =>
+                    l.itemProperties.twoHanded switch
+                    {
+                        true => r.itemProperties.twoHanded ? 0 : -1,
+                        false => r.itemProperties.twoHanded ? 1 : 0,
+                    }
+            );
+        }
+        else
+        {
+            var r = new Random();
+            items = items
+                .Select(x => (x, r.Next()))
+                .OrderBy(i => i.Item2)
+                .Select(i => i.Item1)
+                .ToArray();
+        }
+
         string p = null!;
         int i = 0;
         int f = 0;
@@ -130,6 +171,50 @@ public class SortItemsCommand : Command
             }
 
             if (!MoveItem(item, positions[i % positions.Length]))
+                f++;
+        }
+
+        return f;
+    }
+
+    private int SortItems(GrabbableObject[] items, Dictionary<string, Vector3> positions)
+    {
+        Array.Sort(items, (l, r) => new CaseInsensitiveComparer().Compare(l.name, r.name));
+        Array.Sort(
+            items,
+            (l, r) =>
+                l.itemProperties.twoHanded switch
+                {
+                    true => r.itemProperties.twoHanded ? 0 : -1,
+                    false => r.itemProperties.twoHanded ? 1 : 0,
+                }
+        );
+        int f = 0;
+        foreach (var item in items)
+        {
+            if (
+                !positions.TryGetValue(
+                    item.name.EndsWith(CLONE) ? item.name[..^CLONE.Length] : item.name,
+                    out var position
+                )
+            )
+            {
+                position = FallbackPosition;
+                LethalShipSort.Logger.LogWarning(
+                    $"Position for item {(item.name.EndsWith(CLONE) ? item.name[..^CLONE.Length] : item.name)} not found"
+                );
+                if (!displayedWarning)
+                {
+                    displayedWarning = true;
+                    ChatCommandAPI.ChatCommandAPI.PrintWarning(NAMED_WARNING);
+                }
+            }
+            else
+                LethalShipSort.Logger.LogDebug(
+                    $"Position for item {(item.name.EndsWith(CLONE) ? item.name[..^CLONE.Length] : item.name)}: {position}"
+                );
+
+            if (!MoveItem(item, position))
                 f++;
         }
 
@@ -189,22 +274,28 @@ public class PositionExtract : Command
         ship = GameObject.Find("Environment/HangarShip").transform;
         if (ship == null)
             return false;
-        StringBuilder sb = new StringBuilder("\n[\n");
+        StringBuilder sb = new StringBuilder("\n[\n"),
+            sb2 = new StringBuilder("\nnew Dictionary<string, (float, float)>()\n{\n");
         int i = 0,
             j = 0;
         foreach (var kvp in ItemList.GoodItems)
         {
             sb.Append(Extract(kvp.Value));
+            sb2.Append(Extract(kvp.Key, kvp.Value));
             i++;
         }
         sb.Append("\n");
+        sb2.Append("\n");
         foreach (var kvp in ItemList.BadItems)
         {
             sb.Append(Extract(kvp.Value));
+            sb2.Append(Extract(kvp.Key, kvp.Value));
             j++;
         }
         sb.Append("];");
+        sb2.Append("};");
         LethalShipSort.Logger.LogInfo(sb.ToString());
+        LethalShipSort.Logger.LogInfo(sb2.ToString());
         ChatCommandAPI.ChatCommandAPI.Print($"Printed {i}+{j} positions to log");
         return true;
     }
@@ -213,5 +304,11 @@ public class PositionExtract : Command
     {
         Vector3 localPos = ship.InverseTransformPoint(pos);
         return $"  ({Math.Round(localPos.x, 2)}f, {Math.Round(localPos.z, 2)}f),\n";
+    }
+
+    private string Extract(string key, Vector3 pos)
+    {
+        Vector3 localPos = ship.InverseTransformPoint(pos);
+        return $"  [\"{key}\"] = ({Math.Round(localPos.x, 2)}f, {Math.Round(localPos.z, 2)}f),\n";
     }
 }
