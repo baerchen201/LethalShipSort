@@ -30,15 +30,18 @@ public class SortItemsCommand : Command
 {
     public override string Name => "SortItems";
     public override string[] Commands => [Name, "Sort", "Organize"];
-    public override string Description => "Sorts all items on the ship";
+    public override string Description =>
+        "Sorts all items on the ship\n-a: sort all items, even items on cruiser";
+    public override string[] Syntax => ["", "[ -a | --all ]"];
 
     public override bool Invoke(string[] args, Dictionary<string, string> kwargs, out string error)
     {
         error = "The ship must be in orbit";
-        return StartOfRound.Instance.inShipPhase && SortAllItems(out error);
+        return StartOfRound.Instance.inShipPhase
+            && SortAllItems(args.Contains("-a") || args.Contains("--all"), out error);
     }
 
-    private static bool SortAllItems(out string error)
+    private static bool SortAllItems(bool all, out string error)
     {
         error = "No items to sort";
         var items = Object.FindObjectsOfType<GrabbableObject>();
@@ -50,13 +53,36 @@ public class SortItemsCommand : Command
         if (items.Length == 0)
             return false;
 
-        var scrap = items.Where(i => i.itemProperties.isScrap).ToArray();
+        var cars = Object.FindObjectsOfType<VehicleController>() ?? [];
+
+        var scrap = items
+            .Where(i =>
+                i.itemProperties.isScrap
+                && (
+                    all
+                    || !(
+                        Utils.RemoveClone(i.name) == "ShotgunItem"
+                        && cars.Any(car => i.gameObject.transform.parent == car.transform)
+                    )
+                )
+            )
+            .ToArray();
         int scrapFailed = 0;
         int toolsFailed = 0;
         if (scrap.Length != 0)
             scrapFailed = SortItems(scrap);
 
-        var tools = items.Where(i => !i.itemProperties.isScrap).ToArray();
+        var tools = items
+            .Where(i =>
+                !i.itemProperties.isScrap
+                && (
+                    all
+                    || cars.All(car =>
+                        i.gameObject.transform.parent != car.gameObject.gameObject.transform
+                    )
+                )
+            )
+            .ToArray();
         if (tools.Length != 0)
             toolsFailed = SortItems(tools);
 
