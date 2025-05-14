@@ -1,8 +1,11 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using BepInEx;
+using BepInEx.Configuration;
 using BepInEx.Logging;
 using ChatCommandAPI;
+using HarmonyLib;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -14,15 +17,47 @@ public class LethalShipSort : BaseUnityPlugin
 {
     public static LethalShipSort Instance { get; private set; } = null!;
     internal static new ManualLogSource Logger { get; private set; } = null!;
+    internal static Harmony? Harmony { get; set; }
+
+    public static ConfigEntry<bool> AutoSort = null!;
 
     private void Awake()
     {
         Logger = base.Logger;
         Instance = this;
 
+        AutoSort = Config.Bind(
+            "General",
+            "AutoSort",
+            false,
+            "Whether to automatically sort the ship when leaving a planet (toggle ingame with /autosort)"
+        );
+        Patch();
+
         _ = new SortItemsCommand();
+        _ = new AutoSortToggle();
 
         Logger.LogInfo($"{MyPluginInfo.PLUGIN_GUID} v{MyPluginInfo.PLUGIN_VERSION} has loaded!");
+    }
+
+    internal static void Patch()
+    {
+        Harmony ??= new Harmony(MyPluginInfo.PLUGIN_GUID);
+
+        Logger.LogDebug("Patching...");
+
+        Harmony.PatchAll();
+
+        Logger.LogDebug("Finished patching!");
+    }
+
+    internal static void Unpatch()
+    {
+        Logger.LogDebug("Unpatching...");
+
+        Harmony?.UnpatchSelf();
+
+        Logger.LogDebug("Finished unpatching!");
     }
 }
 
@@ -94,6 +129,45 @@ public class SortItemsCommand : Command
 
     public static int SortItems(GrabbableObject[] items) =>
         items.Count(item => !Utils.MoveItem(item));
+
+    [HarmonyPatch(typeof(StartOfRound), nameof(StartOfRound.SetShipReadyToLand))]
+    internal static class AutoSortPatch
+    {
+        // ReSharper disable once UnusedMember.Local
+        private static void Prefix()
+        {
+            if (!LethalShipSort.AutoSort.Value)
+                return;
+            ChatCommandAPI.ChatCommandAPI.Print("Sorting all items...");
+            try
+            {
+                if (!SortItemsCommand.SortAllItems(false, out var error))
+                    ChatCommandAPI.ChatCommandAPI.PrintError($"Automatic sorting failed: {error}");
+                else
+                    ChatCommandAPI.ChatCommandAPI.Print("Finished sorting items");
+            }
+            catch (Exception e)
+            {
+                ChatCommandAPI.ChatCommandAPI.PrintError(
+                    $"Automatic sorting failed due to an internal error, check the log for details"
+                );
+                LethalShipSort.Logger.LogError($"Error while autosorting items: {e}");
+            }
+        }
+    }
+}
+
+public class AutoSortToggle : ToggleCommand
+{
+    public override string Name => "AutoSort";
+    public override string ToggleDescription =>
+        "Toggles automatic item sorting when leaving a planet";
+
+    public override bool Value
+    {
+        get => LethalShipSort.AutoSort.Value;
+        set => LethalShipSort.AutoSort.Value = value;
+    }
 }
 
 public static class Utils
