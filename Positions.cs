@@ -30,6 +30,7 @@ public static class Positions
             "RedLocustHive" => new Vector3(-6.8f, 4.4f, -5.65f),
             "WhoopieCushion" => new Vector3(9f, 2f, -8.25f),
             "ShotgunItem" => new Vector3(8.75f, 2f, -5.5f),
+            "ZeddogPlushie" => new Vector3(9f, 1.21f, -5.55f),
             _ => twoHanded ? new Vector3(-4.5f, 3f, -5.25f) : new Vector3(-2.25f, 2f, -5.25f),
         };
 
