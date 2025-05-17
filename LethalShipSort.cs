@@ -79,6 +79,7 @@ public class SortItemsCommand : Command
     private static bool SortAllItems(bool all, out string error)
     {
         error = "No items to sort";
+        GameNetworkManager.Instance.localPlayerController.DropAllHeldItemsAndSync();
         var items = Object.FindObjectsOfType<GrabbableObject>();
         if (items == null)
             return false;
