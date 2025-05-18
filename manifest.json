@@ -1,6 +1,6 @@
 {
   "name": "ShipSort",
-  "version_number": "1.4.2",
+  "version_number": "1.4.3",
   "website_url": "https://github.com/baerchen201/LethalShipSort",
   "description": "Automatically sorts and organizes all items on your ship",
   "dependencies": [
