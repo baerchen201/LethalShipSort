@@ -26,7 +26,7 @@ public static class Positions
         Utils.RemoveClone(name ?? "") switch
         {
             "SoccerBall" => new Vector3(-6.8f, 4.4f, -7.75f),
-            "LungApparatusTurnedOff" => new Vector3(-6.8f, 4.4f, -6.65f),
+            "LungApparatusTurnedOff" or "LungApparatus" => new Vector3(-6.8f, 4.4f, -6.65f),
             "RedLocustHive" => new Vector3(-6.8f, 4.4f, -5.65f),
             "WhoopieCushion" => new Vector3(9f, 2f, -8.25f),
             "ShotgunItem" => new Vector3(8.75f, 2f, -5.5f),
