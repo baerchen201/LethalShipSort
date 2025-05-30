@@ -223,19 +223,19 @@ public class LethalShipSort : BaseUnityPlugin
         defaultOneHand = Config.Bind(
             "Items",
             "DefaultOneHand",
-            "Environment/HangarShip:-2.25,2,-5.25",
+            "-2.25,2,-5.25",
             "Default position for one-handed items."
         );
         defaultTwoHand = Config.Bind(
             "Items",
             "DefaultTwoHand",
-            "Environment/HangarShip:-4.5,3,-5.25",
+            "-4.5,3,-5.25",
             "Default position for two-handed items."
         );
         defaultTool = Config.Bind(
             "Items",
             "DefaultTool",
-            $"Environment/HangarShip/StorageCloset:-2,0.6,{CUPBOARD_BOTTOM}",
+            $"cupboard:-2,0.6,{CUPBOARD_BOTTOM}",
             "Default position for tool items."
         );
 
@@ -392,7 +392,7 @@ public class LethalShipSort : BaseUnityPlugin
         customItemPositions = Config.Bind(
             "Items",
             "CustomItemPositions",
-            "MyItem1:0,0,0;MyItem2:Environment/HangarShip/StorageCloset:1.5,-2,3",
+            "MyItem1:0,0,0;MyItem2:cupboard:1.5,-2,3",
             "Semicolon-separated list of internal item names and their positions."
         );
     }
@@ -427,7 +427,7 @@ public class LethalShipSort : BaseUnityPlugin
         itemPositions[internalName] = Config.Bind(
             isTool ? "Tools" : "Scrap",
             internalName,
-            $"{(defaultInCupboard ?? isTool ? "Environment/HangarShip/StorageCloset" : "Environment/HangarShip")}:{Math.Round(defaultPosition.x, 2)},{Math.Round(defaultPosition.y, 2)},{Math.Round(defaultPosition.z, 2)}",
+            $"{(defaultInCupboard ?? isTool ? "cupboard:" : "")}{Math.Round(defaultPosition.x, 2)},{Math.Round(defaultPosition.y, 2)},{Math.Round(defaultPosition.z, 2)}",
             $"Position for the {itemName} item."
         );
 
@@ -440,7 +440,7 @@ public class LethalShipSort : BaseUnityPlugin
         itemPositions[itemName] = Config.Bind(
             isTool ? "Tools" : "Scrap",
             itemName,
-            $"{(defaultInCupboard ?? isTool ? "Environment/HangarShip/StorageCloset" : "Environment/HangarShip")}:{Math.Round(defaultPosition.x, 2)},{Math.Round(defaultPosition.y, 2)},{Math.Round(defaultPosition.z, 2)}",
+            $"{(defaultInCupboard ?? isTool ? "cupboard:" : "")}{Math.Round(defaultPosition.x, 2)},{Math.Round(defaultPosition.y, 2)},{Math.Round(defaultPosition.z, 2)}",
             $"Position for the {itemName} item."
         );
 
@@ -529,7 +529,18 @@ public class SortItemsCommand : Command
     }
 
     public static int SortItems(GrabbableObject[] items) =>
-        items.Count(item => !Utils.MoveItem(item));
+        items.Count(item =>
+        {
+            try
+            {
+                return !Utils.MoveItem(item);
+            }
+            catch (Exception e)
+            {
+                LethalShipSort.Logger.LogError(e);
+                return true;
+            }
+        });
 
     [HarmonyPatch(typeof(StartOfRound), nameof(StartOfRound.SetShipReadyToLand))]
     internal static class AutoSortPatch
@@ -583,40 +594,47 @@ public static class Utils
         || MoveItem(item, LethalShipSort.Instance.GetPosition(item));
 
     public static bool MoveItem(GrabbableObject item, ItemPosition position) =>
-        position.parentTo == null || position.parentTo == GameObject.Find("Environment/HangarShip")
-            ? MoveItem(item, position.position)
-            : MoveItem(item, position.position, position.parentTo);
+        position.parentTo == GameObject.Find("Environment/HangarShip/StorageCloset")
+            ? MoveItem(item, position.position, position.parentTo)
+            : MoveItemRelativeTo(item, position.position, position.parentTo);
 
-    public static bool MoveItem(GrabbableObject item, Vector3 position)
+    public static bool MoveItemRelativeTo(
+        GrabbableObject item,
+        Vector3 position,
+        GameObject? relativeTo
+    )
     {
         LethalShipSort.Logger.LogDebug(
-            $">> Moving item {RemoveClone(item.name)} to position {position} in ship"
+            $">> Moving item {RemoveClone(item.name)} to position {position} relative to {(relativeTo == null ? "ship" : RemoveClone(relativeTo.name))}"
         );
-        Transform ship = GameObject.Find("Environment/HangarShip").transform;
-        if (ship != null)
-            if (
-                Physics.Raycast(
-                    ship.TransformPoint(position),
-                    Vector3.down,
-                    out var hitInfo,
-                    80f,
-                    268437760,
-                    QueryTriggerInteraction.Ignore
-                )
-            )
-                position = Randomize(
-                    ship.InverseTransformPoint(
-                        hitInfo.point + item.itemProperties.verticalOffset * Vector3.up
-                    )
-                );
-            else
-            {
-                LethalShipSort.Logger.LogWarning("   Raycast unsuccessful");
-                return false;
-            }
-        else
+
+        GameObject ship = GameObject.Find("Environment/HangarShip");
+        if (ship == null)
         {
             LethalShipSort.Logger.LogWarning("   Couldn't find ship");
+            return false;
+        }
+
+        if (relativeTo == null)
+            relativeTo = ship;
+        if (
+            Physics.Raycast(
+                relativeTo.transform.TransformPoint(position),
+                Vector3.down,
+                out var hitInfo,
+                80f,
+                268437760,
+                QueryTriggerInteraction.Ignore
+            )
+        )
+            position = Randomize(
+                ship.transform.InverseTransformPoint(
+                    hitInfo.point + item.itemProperties.verticalOffset * Vector3.up
+                )
+            );
+        else
+        {
+            LethalShipSort.Logger.LogWarning("   Raycast unsuccessful");
             return false;
         }
 

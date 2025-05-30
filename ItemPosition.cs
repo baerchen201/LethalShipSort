@@ -2,6 +2,7 @@ using System;
 using System.Text;
 using System.Text.RegularExpressions;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace LethalShipSort;
 
@@ -25,11 +26,40 @@ public struct ItemPosition
         position = new Vector3(x, y, z);
 
         if (match.Groups[1].Success)
-        {
-            parentTo = GameObject.Find(match.Groups[1].Value);
-            if (parentTo == null)
-                throw new ArgumentException("Invalid parent object");
-        }
+            switch (match.Groups[1].Value.ToLower().Trim('/', '\\'))
+            {
+                case "cupboard":
+                case "closet":
+                    parentTo = GameObject.Find("Environment/HangarShip/StorageCloset");
+                    if (parentTo == null)
+                        throw new Exception("Storage closet not found");
+                    break;
+                case "file":
+                case "cabinet":
+                case "cabinets":
+                case "file_cabinet":
+                case "file_cabinets":
+                case "filecabinet":
+                case "filecabinets":
+                    parentTo = GameObject.Find("Environment/HangarShip/FileCabinet");
+                    if (parentTo == null)
+                        throw new Exception("File cabinet not found");
+                    break;
+                case "ship":
+                    parentTo = null;
+                    break;
+                case "environment":
+                case "none":
+                    parentTo = GameObject.Find("Environment");
+                    if (parentTo == null)
+                        throw new Exception("Environment not found, what the actual fuck");
+                    break;
+                default:
+                    parentTo = GameObject.Find(match.Groups[1].Value);
+                    if (parentTo == null)
+                        throw new ArgumentException("Invalid parent object");
+                    break;
+            }
     }
 
     public override string ToString()
