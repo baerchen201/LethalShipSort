@@ -19,18 +19,35 @@ public class LethalShipSort : BaseUnityPlugin
     internal static new ManualLogSource Logger { get; private set; } = null!;
     internal static Harmony? Harmony { get; set; }
 
-    public static ConfigEntry<bool> AutoSort = null!;
+    private ConfigEntry<bool> autoSort = null!;
+    public bool AutoSort
+    {
+        get => autoSort.Value;
+        set => autoSort.Value = value;
+    }
+    private ConfigEntry<string> excludeItems = null!;
+    public string[] ExcludeItems
+    {
+        get => excludeItems.Value.Split(",");
+        internal set => excludeItems.Value = value.Join(null, ",");
+    }
 
     private void Awake()
     {
         Logger = base.Logger;
         Instance = this;
 
-        AutoSort = Config.Bind(
+        autoSort = Config.Bind(
             "General",
             "AutoSort",
             false,
             "Whether to automatically sort the ship when leaving a planet (toggle ingame with /autosort)"
+        );
+        excludeItems = Config.Bind(
+            "Items",
+            "ExcludeItems",
+            "",
+            "Comma-separated list of item names to never sort (by internal name)"
         );
         Patch();
 
@@ -89,6 +106,8 @@ public class SortItemsCommand : Command
         if (items.Length == 0)
             return false;
 
+        ChatCommandAPI.ChatCommandAPI.Print("Sorting all items...");
+
         var cars = Object.FindObjectsOfType<VehicleController>() ?? [];
 
         var scrap = items
@@ -125,7 +144,10 @@ public class SortItemsCommand : Command
         error =
             $"{(scrapFailed > 0 ? $"{scrapFailed} scrap items {(toolsFailed > 0 ? "and " : "")}" : "")}{(toolsFailed > 0 ? $"{toolsFailed} tool items" : "")} couldn't be sorted";
 
-        return scrapFailed == 0 && toolsFailed == 0;
+        if (scrapFailed != 0 || toolsFailed != 0)
+            return false;
+        ChatCommandAPI.ChatCommandAPI.Print("Finished sorting items");
+        return true;
     }
 
     public static int SortItems(GrabbableObject[] items) =>
@@ -137,7 +159,7 @@ public class SortItemsCommand : Command
         // ReSharper disable once UnusedMember.Local
         private static void Prefix()
         {
-            if (!LethalShipSort.AutoSort.Value)
+            if (!LethalShipSort.Instance.AutoSort)
                 return;
             ChatCommandAPI.ChatCommandAPI.Print("Sorting all items...");
             try
@@ -166,8 +188,8 @@ public class AutoSortToggle : ToggleCommand
 
     public override bool Value
     {
-        get => LethalShipSort.AutoSort.Value;
-        set => LethalShipSort.AutoSort.Value = value;
+        get => LethalShipSort.Instance.AutoSort;
+        set => LethalShipSort.Instance.AutoSort = value;
     }
 }
 
@@ -178,12 +200,13 @@ public static class Utils
     public static string RemoveClone(string name) =>
         name.EndsWith(CLONE) ? name[..^CLONE.Length] : name;
 
-    public static bool MoveItem(GrabbableObject item)
-    {
-        return item.itemProperties.isScrap
-            ? MoveItem(item, Positions.GetPosition(item))
-            : MoveItemToCloset(item, Positions.GetPosition(item));
-    }
+    public static bool MoveItem(GrabbableObject item) =>
+        LethalShipSort.Instance.ExcludeItems.Contains(RemoveClone(item.name))
+        || (
+            item.itemProperties.isScrap
+                ? MoveItem(item, Positions.GetPosition(item))
+                : MoveItemToCloset(item, Positions.GetPosition(item))
+        );
 
     public static bool MoveItem(GrabbableObject item, Vector3 position)
     {
