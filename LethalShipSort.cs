@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Emit;
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
@@ -548,7 +549,10 @@ public class SortItemsCommand : Command
         // ReSharper disable once UnusedMember.Local
         private static void Prefix()
         {
-            if (!LethalShipSort.Instance.AutoSort)
+            if (
+                !LethalShipSort.Instance.AutoSort
+                || !GameNetworkManager.Instance.localPlayerController.isHostPlayerObject
+            )
                 return;
             ChatCommandAPI.ChatCommandAPI.Print("Sorting all items...");
             try
