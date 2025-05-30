@@ -1,8 +1,6 @@
 using System;
-using System.Text;
 using System.Text.RegularExpressions;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace LethalShipSort;
 

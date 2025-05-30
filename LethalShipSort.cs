@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection.Emit;
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
@@ -557,7 +556,7 @@ public class SortItemsCommand : Command
             ChatCommandAPI.ChatCommandAPI.Print("Sorting all items...");
             try
             {
-                if (!SortItemsCommand.SortAllItems(false, out var error))
+                if (!SortAllItems(false, out var error))
                     ChatCommandAPI.ChatCommandAPI.PrintError($"Automatic sorting failed: {error}");
                 else
                     ChatCommandAPI.ChatCommandAPI.Print("Finished sorting items");
