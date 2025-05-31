@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using BepInEx;
 using BepInEx.Configuration;
@@ -30,7 +31,21 @@ public class LethalShipSort : BaseUnityPlugin
     public string[] ExcludeItems
     {
         get => excludeItems.Value.Split(",");
-        internal set => excludeItems.Value = value.Join(null, ",");
+        set => excludeItems.Value = value.Join(null, ",");
+    }
+
+    private ConfigEntry<bool> useRaycast = null!;
+    private ConfigEntry<uint> sortDelay = null!;
+
+    public bool UseRaycast
+    {
+        get => useRaycast.Value;
+        set => useRaycast.Value = value;
+    }
+    public uint SortDelay // TODO: IMPLEMENT
+    {
+        get => sortDelay.Value;
+        set => sortDelay.Value = value;
     }
 
     private ConfigEntry<string> defaultOneHand = null!;
@@ -197,6 +212,18 @@ public class LethalShipSort : BaseUnityPlugin
             "AutoSort",
             false,
             "Whether to automatically sort the ship when leaving a planet (toggle ingame with /autosort)"
+        );
+        useRaycast = Config.Bind(
+            "General",
+            "UseRaycast",
+            true,
+            "If enabled, items will be put on the closest surface below the given position, instead of the exact coordinates"
+        );
+        sortDelay = Config.Bind(
+            "General",
+            "SortDelay",
+            (uint)0,
+            "The amount of milliseconds to wait between moving items, mostly for the satisfying visual effect.\nYou can't pick anything up while sorting items."
         );
 
         BindItemPositionConfigs();
@@ -575,6 +602,33 @@ public class SortItemsCommand : Command
     }
 }
 
+internal class PrintLayerMasks : Command
+{
+    public override bool Hidden => true;
+
+    public override bool Invoke(string[] args, Dictionary<string, string> kwargs, out string error)
+    {
+        LethalShipSort.Logger.LogInfo("LayerMask MoveItemRelativeTo:");
+        for (int i = 0; i < 32; i++)
+        {
+            LethalShipSort.Logger.LogInfo(
+                $" {((268437760 & (1 << i)) != 0 ? "o" : "-")} {LayerMask.LayerToName(i)}"
+            );
+        }
+        LethalShipSort.Logger.LogInfo("LayerMask MoveItem:");
+        for (int i = 0; i < 32; i++)
+        {
+            LethalShipSort.Logger.LogInfo(
+                $" {((1073744640 & (1 << i)) != 0 ? "o" : "-")} {LayerMask.LayerToName(i)}"
+            );
+        }
+
+        ChatCommandAPI.ChatCommandAPI.Print("layer masks printed to log");
+        error = null!;
+        return true;
+    }
+}
+
 public class AutoSortToggle : ToggleCommand
 {
     public override string Name => "AutoSort";
@@ -623,26 +677,36 @@ public static class Utils
 
         if (relativeTo == null)
             relativeTo = ship;
-        if (
-            Physics.Raycast(
-                relativeTo.transform.TransformPoint(position),
-                Vector3.down,
-                out var hitInfo,
-                80f,
-                268437760,
-                QueryTriggerInteraction.Ignore
-            )
-        )
-            position = Randomize(
-                ship.transform.InverseTransformPoint(
-                    hitInfo.point + item.itemProperties.verticalOffset * Vector3.up
+        if (LethalShipSort.Instance.UseRaycast)
+            if (
+                Physics.Raycast(
+                    relativeTo.transform.TransformPoint(position),
+                    Vector3.down,
+                    out var hitInfo,
+                    80f,
+                    (int)(
+                        Layers.Room
+                        | Layers.InteractableObject
+                        | Layers.Colliders
+                        | Layers.Vehicle
+                        | Layers.Railing
+                        | Layers.PlaceableShipObjects
+                    ),
+                    QueryTriggerInteraction.Ignore
                 )
-            );
+            )
+                position = Randomize(
+                    ship.transform.InverseTransformPoint(
+                        hitInfo.point + item.itemProperties.verticalOffset * Vector3.up
+                    )
+                );
+            else
+            {
+                LethalShipSort.Logger.LogWarning("   Raycast unsuccessful");
+                return false;
+            }
         else
-        {
-            LethalShipSort.Logger.LogWarning("   Raycast unsuccessful");
-            return false;
-        }
+            position = Randomize(position + item.itemProperties.verticalOffset * Vector3.up);
 
         GameNetworkManager.Instance.localPlayerController.SetObjectAsNoLongerHeld(
             true,
@@ -665,29 +729,39 @@ public static class Utils
         LethalShipSort.Logger.LogDebug(
             $">> Moving item {RemoveClone(item.name)} to position {position} in {RemoveClone(parentTo.name)}"
         );
-        if (
-            Physics.Raycast(
-                parentTo.transform.TransformPoint(position),
-                Vector3.down,
-                out var hitInfo,
-                80f,
-                1073744640,
-                QueryTriggerInteraction.Ignore
-            )
-        )
-            position = parentTo.transform.InverseTransformPoint(
-                Randomize(
-                    hitInfo.point
-                        + item.itemProperties.verticalOffset * Vector3.up
-                        - new Vector3(0f, 0.05f, 0f),
-                    0.02f
+        if (LethalShipSort.Instance.UseRaycast)
+            if (
+                Physics.Raycast(
+                    parentTo.transform.TransformPoint(position),
+                    Vector3.down,
+                    out var hitInfo,
+                    80f,
+                    (int)(
+                        Layers.Room | Layers.InteractableObject | Layers.Colliders | Layers.Vehicle
+                    ),
+                    QueryTriggerInteraction.Ignore
                 )
-            );
+            )
+                position = parentTo.transform.InverseTransformPoint(
+                    Randomize(
+                        hitInfo.point
+                            + item.itemProperties.verticalOffset * Vector3.up
+                            - new Vector3(0f, 0.05f, 0f),
+                        0.02f
+                    )
+                );
+            else
+            {
+                LethalShipSort.Logger.LogWarning("   Raycast unsuccessful");
+                return false;
+            }
         else
-        {
-            LethalShipSort.Logger.LogWarning("   Raycast unsuccessful");
-            return false;
-        }
+            position = Randomize(
+                position
+                    + item.itemProperties.verticalOffset * Vector3.up
+                    - new Vector3(0f, 0.05f, 0f),
+                0.02f
+            );
 
         GameNetworkManager.Instance.localPlayerController.SetObjectAsNoLongerHeld(
             true,
@@ -728,5 +802,42 @@ public static class Utils
             position.y,
             position.z + (float)rng.NextDouble() * maxDistance * 2 - maxDistance
         );
+    }
+
+    [Flags]
+    [SuppressMessage("ReSharper", "UnusedMember.Local")]
+    private enum Layers
+    {
+        Default = 1,
+        TransparentFX = 2,
+        IgnoreRaycast = 4,
+        Player = 8,
+        Water = 16,
+        UI = 32,
+        Props = 64,
+        HelmetVisor = 128,
+        Room = 256,
+        InteractableObject = 512,
+        Foliage = 1024,
+        Colliders = 2048,
+        PhysicsObject = 4096,
+        Triggers = 8192,
+        MapRadar = 16384,
+        NavigationSurface = 32768,
+        MoldSpore = 65536,
+        Anomaly = 131072,
+        LineOfSight = 262144,
+        Enemies = 524288,
+        PlayerRagdoll = 1048576,
+        MapHazards = 2097152,
+        ScanNode = 4194304,
+        EnemiesNotRendered = 8388608,
+        MiscLevelGeometry = 16777216,
+        Terrain = 33554432,
+        PlaceableShipObjects = 67108864,
+        PlacementBlocker = 134217728,
+        Railing = 268435456,
+        DecalStickableSurface = 536870912,
+        Vehicle = 1073741824,
     }
 }
