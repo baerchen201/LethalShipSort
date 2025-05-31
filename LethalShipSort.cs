@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -42,7 +43,7 @@ public class LethalShipSort : BaseUnityPlugin
         get => useRaycast.Value;
         set => useRaycast.Value = value;
     }
-    public uint SortDelay // TODO: IMPLEMENT
+    public uint SortDelay
     {
         get => sortDelay.Value;
         set => sortDelay.Value = value;
@@ -501,6 +502,8 @@ public class SortItemsCommand : Command
             && SortAllItems(args.Contains("-a") || args.Contains("--all"), out error);
     }
 
+    private static Coroutine? sorting;
+
     private static bool SortAllItems(bool all, out string error)
     {
         error = "No items to sort";
@@ -530,11 +533,6 @@ public class SortItemsCommand : Command
                 )
             )
             .ToArray();
-        int scrapFailed = 0;
-        int toolsFailed = 0;
-        if (scrap.Length != 0)
-            scrapFailed = SortItems(scrap);
-
         var tools = items
             .Where(i =>
                 !i.itemProperties.isScrap
@@ -546,16 +544,84 @@ public class SortItemsCommand : Command
                 )
             )
             .ToArray();
-        if (tools.Length != 0)
-            toolsFailed = SortItems(tools);
+        if (LethalShipSort.Instance.SortDelay < 10)
+        {
+            int scrapFailed = 0;
+            int toolsFailed = 0;
 
-        error =
+            if (scrap.Length != 0)
+                scrapFailed = SortItems(scrap);
+            if (tools.Length != 0)
+                toolsFailed = SortItems(tools);
+
+            error =
+                $"{(scrapFailed > 0 ? $"{scrapFailed} scrap items {(toolsFailed > 0 ? "and " : "")}" : "")}{(toolsFailed > 0 ? $"{toolsFailed} tool items" : "")} couldn't be sorted";
+
+            if (scrapFailed != 0 || toolsFailed != 0)
+                return false;
+            ChatCommandAPI.ChatCommandAPI.Print("Finished sorting items");
+        }
+        else
+        {
+            if (sorting != null)
+                GameNetworkManager.Instance.localPlayerController.StopCoroutine(sorting);
+            sorting = GameNetworkManager.Instance.localPlayerController.StartCoroutine(
+                SortAllItemsDelayed(LethalShipSort.Instance.SortDelay, scrap, tools)
+            );
+        }
+
+        return true;
+    }
+
+    public static IEnumerator SortAllItemsDelayed(
+        uint delay,
+        GrabbableObject[] scrap,
+        GrabbableObject[] tools
+    )
+    {
+        int scrapFailed = 0;
+        int toolsFailed = 0;
+
+        foreach (var item in scrap)
+        {
+            try
+            {
+                if (!Utils.MoveItem(item))
+                    scrapFailed++;
+            }
+            catch (Exception e)
+            {
+                LethalShipSort.Logger.LogError(e);
+                scrapFailed++;
+            }
+
+            yield return new WaitForSeconds(delay / 1000f);
+        }
+        foreach (var item in tools)
+        {
+            try
+            {
+                if (!Utils.MoveItem(item))
+                    toolsFailed++;
+            }
+            catch (Exception e)
+            {
+                LethalShipSort.Logger.LogError(e);
+                toolsFailed++;
+            }
+
+            yield return new WaitForSeconds(delay / 1000f);
+        }
+
+        string error =
             $"{(scrapFailed > 0 ? $"{scrapFailed} scrap items {(toolsFailed > 0 ? "and " : "")}" : "")}{(toolsFailed > 0 ? $"{toolsFailed} tool items" : "")} couldn't be sorted";
 
         if (scrapFailed != 0 || toolsFailed != 0)
-            return false;
-        ChatCommandAPI.ChatCommandAPI.Print("Finished sorting items");
-        return true;
+            ChatCommandAPI.ChatCommandAPI.PrintError(
+                "Error running command: <noparse>" + error + "</noparse>"
+            );
+        else
+            ChatCommandAPI.ChatCommandAPI.Print("Finished sorting items");
     }
 
     public static int SortItems(GrabbableObject[] items) =>
