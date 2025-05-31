@@ -103,6 +103,7 @@ public class LethalShipSort : BaseUnityPlugin
                 string[] split = i.Split(':', 1);
                 if (split.Length != 2)
                 {
+                    Logger.LogDebug("split.Length != 2");
                     goto skip;
                 }
 
@@ -112,8 +113,9 @@ public class LethalShipSort : BaseUnityPlugin
                 {
                     positions[split[0]] = new ItemPosition(split[1]);
                 }
-                catch (ArgumentException)
+                catch (ArgumentException e)
                 {
+                    Logger.LogDebug($"{split[0]} {split[1]} {e}");
                     goto skip;
                 }
                 continue;
@@ -162,14 +164,15 @@ public class LethalShipSort : BaseUnityPlugin
         if (itemPositions.TryGetValue(itemName, out var itemPositionConfig))
             try
             {
-                itemPosition = new ItemPosition(itemPositionConfig.Value);
+                if (!itemPositionConfig.Value.IsNullOrWhiteSpace())
+                    itemPosition = new ItemPosition(itemPositionConfig.Value);
             }
             catch (ArgumentException)
             {
                 Logger.LogError(
                     $"Invalid item position for {itemName} ({itemPositionConfig.Value}), using fallback"
                 );
-                if ((string)itemPositionConfig.DefaultValue != "")
+                if (!((string)itemPositionConfig.DefaultValue).IsNullOrWhiteSpace())
                     itemPosition = new ItemPosition((string)itemPositionConfig.DefaultValue);
             }
         else if (CustomItemPositions.TryGetValue(itemName, out var _itemPosition))
