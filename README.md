@@ -39,7 +39,21 @@ Alternatively, there are a couple keywords for common parent objects:
 The `customItemPositions` config value contains a list of other item positions by name.
 This can be used to sort mod items, or items from future updates.
 
-Format: `itemname:parent:0,0,0;itemname:parent:0,0,0`
+Format: `itemname:parent:x,y,z;itemname:parent:x,y,z`
+
+### Raycasting
+
+By default, all positions will trace a line downwards to find the closest spot on the ground (or any ship objects), and the items will be put there.
+That way, no items will be floating mid-air.
+
+However, if you prefer your items to be at the exact position you specified, you can disable this with the `UseRaycast` config value.
+
+### Delayed sorting
+
+If you like the visual effect of items flying to their positions one by one, you can set the `SortDelay` config value to add an interval between moving items.
+
+Setting this to 250ms means, that only about 4 items will be sorted per second.
+This makes the sorting process slower, but adds the satisfying visual effect.
 
 ## Autosorting
 
