@@ -288,6 +288,7 @@ public class LethalShipSort : BaseUnityPlugin
         ItemPositionConfig("CookieMoldPan", "Cookie mold pan");
         ItemPositionConfig("Dustpan", "Dust pan");
         ItemPositionConfig("EasterEgg", "Easter egg");
+        ItemPositionConfig("KiwiBabyItem", "Egg", new Vector3(4.85f, 2f, -4));
         ItemPositionConfig("EggBeater", "Egg beater");
         ItemPositionConfig("FancyLamp", "Fancy lamp");
         ItemPositionConfig("Flask");
