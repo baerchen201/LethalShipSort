@@ -573,10 +573,86 @@ public class SortItemsCommand : Command
         return true;
     }
 
+    private static void AutoSortAllItems()
+    {
+        try
+        {
+            GameNetworkManager.Instance.localPlayerController.DropAllHeldItemsAndSync();
+            var items = Object.FindObjectsOfType<GrabbableObject>();
+            if (items == null)
+                return;
+            items = items
+                .Where(i => i is { playerHeldBy: null } and not RagdollGrabbableObject)
+                .ToArray();
+            if (items.Length == 0)
+                return;
+
+            ChatCommandAPI.ChatCommandAPI.Print("Sorting all items...");
+
+            var cars = Object.FindObjectsOfType<VehicleController>() ?? [];
+
+            var scrap = items
+                .Where(i =>
+                    i.itemProperties.isScrap
+                    && !(
+                        Utils.RemoveClone(i.name) == "ShotgunItem"
+                        && cars.Any(car => i.gameObject.transform.parent == car.transform)
+                    )
+                )
+                .ToArray();
+            var tools = items
+                .Where(i =>
+                    !i.itemProperties.isScrap
+                    && cars.All(car =>
+                        i.gameObject.transform.parent != car.gameObject.gameObject.transform
+                    )
+                )
+                .ToArray();
+            if (LethalShipSort.Instance.SortDelay < 10)
+            {
+                int scrapFailed = 0;
+                int toolsFailed = 0;
+
+                if (scrap.Length != 0)
+                    scrapFailed = SortItems(scrap);
+                if (tools.Length != 0)
+                    toolsFailed = SortItems(tools);
+
+                if (scrapFailed != 0 || toolsFailed != 0)
+                    ChatCommandAPI.ChatCommandAPI.PrintError(
+                        $"Automatic sorting failed: {(scrapFailed > 0 ? $"{scrapFailed} scrap items {(toolsFailed > 0 ? "and " : "")}" : "")}{(toolsFailed > 0 ? $"{toolsFailed} tool items" : "")} couldn't be sorted"
+                    );
+                else
+                    ChatCommandAPI.ChatCommandAPI.Print("Finished sorting items");
+            }
+            else
+            {
+                if (sorting != null)
+                    GameNetworkManager.Instance.localPlayerController.StopCoroutine(sorting);
+                sorting = GameNetworkManager.Instance.localPlayerController.StartCoroutine(
+                    SortAllItemsDelayed(
+                        LethalShipSort.Instance.SortDelay,
+                        scrap,
+                        tools,
+                        "Automatic sorting failed"
+                    )
+                );
+            }
+        }
+        catch (Exception e)
+        {
+            ChatCommandAPI.ChatCommandAPI.PrintError(
+                "Automatic sorting failed due to an internal error, check the log for details"
+            );
+            LethalShipSort.Logger.LogError($"Error while autosorting items: {e}");
+        }
+    }
+
     public static IEnumerator SortAllItemsDelayed(
         uint delay,
         GrabbableObject[] scrap,
-        GrabbableObject[] tools
+        GrabbableObject[] tools,
+        string errorPrefix = "Error running command"
     )
     {
         int scrapFailed = 0;
@@ -618,7 +694,7 @@ public class SortItemsCommand : Command
 
         if (scrapFailed != 0 || toolsFailed != 0)
             ChatCommandAPI.ChatCommandAPI.PrintError(
-                "Error running command: <noparse>" + error + "</noparse>"
+                $"{errorPrefix}: <noparse>" + error + "</noparse>"
             );
         else
             ChatCommandAPI.ChatCommandAPI.Print("Finished sorting items");
@@ -645,25 +721,10 @@ public class SortItemsCommand : Command
         private static void Prefix()
         {
             if (
-                !LethalShipSort.Instance.AutoSort
-                || !GameNetworkManager.Instance.localPlayerController.isHostPlayerObject
+                LethalShipSort.Instance.AutoSort
+                && GameNetworkManager.Instance.localPlayerController.isHostPlayerObject
             )
-                return;
-            ChatCommandAPI.ChatCommandAPI.Print("Sorting all items...");
-            try
-            {
-                if (!SortAllItems(false, out var error))
-                    ChatCommandAPI.ChatCommandAPI.PrintError($"Automatic sorting failed: {error}");
-                else
-                    ChatCommandAPI.ChatCommandAPI.Print("Finished sorting items");
-            }
-            catch (Exception e)
-            {
-                ChatCommandAPI.ChatCommandAPI.PrintError(
-                    $"Automatic sorting failed due to an internal error, check the log for details"
-                );
-                LethalShipSort.Logger.LogError($"Error while autosorting items: {e}");
-            }
+                AutoSortAllItems();
         }
     }
 }
