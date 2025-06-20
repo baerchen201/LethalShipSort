@@ -119,7 +119,7 @@ public class LethalShipSort : BaseUnityPlugin
             Dictionary<string, ItemPosition> positions = new();
             foreach (string i in customItemPositions.Value.Split(';'))
             {
-                string[] split = i.Split(':', 1);
+                string[] split = i.Split(':', 2);
                 if (split.Length != 2)
                 {
                     Logger.LogDebug("split.Length != 2");
