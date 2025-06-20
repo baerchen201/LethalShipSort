@@ -34,6 +34,21 @@ Alternatively, there are a couple keywords for common parent objects:
  - `none` or `environment` for the world root \(`Environment`\)
  - `ship` for the ship \(`Environment/HangarShip`\), but you can also just not specify a parent since this is the default \(`ship:0,0,0`=`0,0,0`\)
 
+### Using the `/put` command
+
+For simple item placements you can use the `/put` command:
+
+Syntax: `/put "<item>" { here | there } [ once | game | always ]`
+
+ - `<item>` - The item name to move, for example `"Robot Toy"` or `ShotgunItem`
+ - `{ here | there }` - `here` puts the item at the position where you're currently standing, `there` puts it where you're looking
+ - `[ once | game | always ]` - `once` only moves the item once, `game` sets the item sort position for the current round and `always` saves the position in the config file (making it permanent)
+
+Examples:
+ - `/put clock there` - brings all clocks where you're looking
+ - `/put walkietalkie here always` - sets the sorting position of walkie-talkies on your feet
+ - `/put "rubber ducky" there game` - sets the sorting position of rubber duckies where you're looking, but only until you leave the game
+
 ### For modded/other items
 
 The `customItemPositions` config value contains a list of other item positions by name.
