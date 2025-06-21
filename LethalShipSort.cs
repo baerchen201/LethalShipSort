@@ -180,17 +180,32 @@ public class LethalShipSort : BaseUnityPlugin
     {
         string itemName = Utils.RemoveClone(item.name);
         ItemPosition? itemPosition = null;
+
+        Logger.LogDebug(
+            $">> GetPosition({item}) itemName:{itemName} isScrap:{item.itemProperties.isScrap} twoHanded:{item.itemProperties.twoHanded}"
+        );
+
         if (roundOverrides.TryGetValue(itemName.ToLower(), out var itemPositionOverride))
+        {
             itemPosition = new ItemPosition
             {
                 position = itemPositionOverride.Item1,
                 parentTo = itemPositionOverride.Item2,
             };
+            Logger.LogDebug(
+                $"<< GetPosition (roundOverrides) {itemPosition} ({itemPositionOverride.Item1}, {itemPositionOverride.Item2})"
+            );
+        }
         else if (itemPositions.TryGetValue(itemName, out var itemPositionConfig))
             try
             {
                 if (!itemPositionConfig.Value.IsNullOrWhiteSpace())
+                {
                     itemPosition = new ItemPosition(itemPositionConfig.Value);
+                    Logger.LogDebug(
+                        $"<< GetPosition (itemPositions) {itemPosition} ({itemPositionConfig.Value})"
+                    );
+                }
             }
             catch (ArgumentException)
             {
@@ -198,16 +213,34 @@ public class LethalShipSort : BaseUnityPlugin
                     $"Invalid item position for {itemName} ({itemPositionConfig.Value}), using fallback"
                 );
                 if (!((string)itemPositionConfig.DefaultValue).IsNullOrWhiteSpace())
+                {
                     itemPosition = new ItemPosition((string)itemPositionConfig.DefaultValue);
+                    Logger.LogDebug(
+                        $"<< GetPosition (itemPositions - DefaultValue) {itemPosition} ({itemPositionConfig.DefaultValue})"
+                    );
+                }
             }
         else if (CustomItemPositions.TryGetValue(itemName, out var _itemPosition))
+        {
             itemPosition = _itemPosition;
+            Logger.LogDebug($"<< GetPosition (CustomItemPositions) {itemPosition}");
+        }
 
-        itemPosition ??= item.itemProperties.isScrap
-            ? item.itemProperties.twoHanded
-                ? DefaultTwoHand
-                : DefaultOneHand
-            : DefaultTool;
+        if (itemPosition == null)
+        {
+            itemPosition = item.itemProperties.isScrap
+                ? item.itemProperties.twoHanded
+                    ? DefaultTwoHand
+                    : DefaultOneHand
+                : DefaultTool;
+            Logger.LogDebug(
+                $"<< GetPosition ({(item.itemProperties.isScrap
+                ? item.itemProperties.twoHanded
+                    ? "DefaultTwoHand"
+                    : "DefaultOneHand"
+                : "DefaultTool")}) {itemPosition}"
+            );
+        }
 
         return itemPosition.Value;
     }
