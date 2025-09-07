@@ -117,7 +117,7 @@ public class LethalShipSort : BaseUnityPlugin
         get
         {
             Dictionary<string, ItemPosition> positions = new();
-            foreach (string i in customItemPositions.Value.Split(';'))
+            foreach (var i in customItemPositions.Value.Split(';'))
             {
                 string[] split = i.Split(':', 2);
                 if (split.Length != 2)
@@ -178,7 +178,7 @@ public class LethalShipSort : BaseUnityPlugin
 
     public ItemPosition GetPosition(GrabbableObject item)
     {
-        string itemName = Utils.RemoveClone(item.name);
+        var itemName = Utils.RemoveClone(item.name);
         ItemPosition? itemPosition = null;
 
         Logger.LogDebug(
@@ -550,10 +550,10 @@ public class LethalShipSort : BaseUnityPlugin
         // ReSharper disable once UnusedMember.Local
         private static void Postfix()
         {
-            int i = LethalShipSort.Instance.roundOverrides.Count;
-            LethalShipSort.Instance.roundOverrides.Clear();
+            var i = Instance.roundOverrides.Count;
+            Instance.roundOverrides.Clear();
             Logger.LogDebug(
-                $"roundOverrides cleared (was {i} items, now {LethalShipSort.Instance.roundOverrides.Count})"
+                $"roundOverrides cleared (was {i} items, now {Instance.roundOverrides.Count})"
             );
         }
     }
@@ -623,8 +623,8 @@ public class SortItemsCommand : Command
             .ToArray();
         if (LethalShipSort.Instance.SortDelay < 10)
         {
-            int scrapFailed = 0;
-            int toolsFailed = 0;
+            var scrapFailed = 0;
+            var toolsFailed = 0;
 
             if (scrap.Length != 0)
                 scrapFailed = SortItems(scrap);
@@ -687,8 +687,8 @@ public class SortItemsCommand : Command
                 .ToArray();
             if (LethalShipSort.Instance.SortDelay < 10)
             {
-                int scrapFailed = 0;
-                int toolsFailed = 0;
+                var scrapFailed = 0;
+                var toolsFailed = 0;
 
                 if (scrap.Length != 0)
                     scrapFailed = SortItems(scrap);
@@ -732,8 +732,8 @@ public class SortItemsCommand : Command
         string errorPrefix = "Error running command"
     )
     {
-        int scrapFailed = 0;
-        int toolsFailed = 0;
+        var scrapFailed = 0;
+        var toolsFailed = 0;
 
         foreach (var item in scrap)
         {
@@ -766,7 +766,7 @@ public class SortItemsCommand : Command
             yield return new WaitForSeconds(delay / 1000f);
         }
 
-        string error =
+        var error =
             $"{(scrapFailed > 0 ? $"{scrapFailed} scrap items {(toolsFailed > 0 ? "and " : "")}" : "")}{(toolsFailed > 0 ? $"{toolsFailed} tool items" : "")} couldn't be sorted";
 
         if (scrapFailed != 0 || toolsFailed != 0)
@@ -937,7 +937,7 @@ public class SetItemPositionCommand : Command
 
                 if (LethalShipSort.Instance.SortDelay < 10)
                 {
-                    int itemsFailed = items.Count(item =>
+                    var itemsFailed = items.Count(item =>
                     {
                         try
                         {
@@ -1011,7 +1011,7 @@ public class SetItemPositionCommand : Command
 
                 if (LethalShipSort.Instance.SortDelay < 10)
                 {
-                    int itemsFailed = items.Count(item =>
+                    var itemsFailed = items.Count(item =>
                     {
                         try
                         {
@@ -1059,7 +1059,7 @@ public class SetItemPositionCommand : Command
         string errorPrefix = "Error running command"
     )
     {
-        int itemsFailed = 0;
+        var itemsFailed = 0;
 
         foreach (var item in items)
         {
@@ -1082,7 +1082,7 @@ public class SetItemPositionCommand : Command
             yield return new WaitForSeconds(delay / 1000f);
         }
 
-        string error = $"{itemsFailed} items couldn't be sorted";
+        var error = $"{itemsFailed} items couldn't be sorted";
 
         if (itemsFailed != 0)
             ChatCommandAPI.ChatCommandAPI.PrintError(
@@ -1169,14 +1169,14 @@ internal class PrintLayerMasks : Command
     public override bool Invoke(string[] args, Dictionary<string, string> kwargs, out string error)
     {
         LethalShipSort.Logger.LogInfo("LayerMask MoveItemRelativeTo:");
-        for (int i = 0; i < 32; i++)
+        for (var i = 0; i < 32; i++)
         {
             LethalShipSort.Logger.LogInfo(
                 $" {((268437760 & (1 << i)) != 0 ? "o" : "-")} {LayerMask.LayerToName(i)}"
             );
         }
         LethalShipSort.Logger.LogInfo("LayerMask MoveItem:");
-        for (int i = 0; i < 32; i++)
+        for (var i = 0; i < 32; i++)
         {
             LethalShipSort.Logger.LogInfo(
                 $" {((1073744640 & (1 << i)) != 0 ? "o" : "-")} {LayerMask.LayerToName(i)}"
@@ -1228,7 +1228,7 @@ public static class Utils
             $">> Moving item {RemoveClone(item.name)} to position {position} relative to {(relativeTo == null ? "ship" : RemoveClone(relativeTo.name))}"
         );
 
-        GameObject ship = GameObject.Find("Environment/HangarShip");
+        var ship = GameObject.Find("Environment/HangarShip");
         if (ship == null)
         {
             LethalShipSort.Logger.LogWarning("   Couldn't find ship");
@@ -1366,8 +1366,8 @@ public static class Utils
 
     public static string GameObjectPath(GameObject gameObject)
     {
-        Transform parent = gameObject.transform.parent;
-        string path = gameObject.name;
+        var parent = gameObject.transform.parent;
+        var path = gameObject.name;
         while (parent != null)
         {
             path = $"{parent.name}/{path}";

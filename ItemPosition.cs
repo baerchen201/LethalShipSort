@@ -9,7 +9,7 @@ public struct ItemPosition
 {
     public ItemPosition(string s)
     {
-        Match match = new Regex(
+        var match = new Regex(
             @"(?:([\w/\\]+):)?(?:([\d-.]+),){2}([\d-.]+)$",
             RegexOptions.Multiline
         ).Match(s);
@@ -75,12 +75,12 @@ public struct ItemPosition
 
     public override string ToString()
     {
-        string path = "";
+        var path = "";
 
         if (parentTo != null)
         {
             path = parentTo.name;
-            Transform i = parentTo.transform.parent;
+            var i = parentTo.transform.parent;
 
             while (i != null)
             {
