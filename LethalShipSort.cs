@@ -562,7 +562,7 @@ public class LethalShipSort : BaseUnityPlugin
 public class SortItemsCommand : Command
 {
     public override string Name => "SortItems";
-    public override string[] Commands => [Name, "Sort", "Organize"];
+    public override string[] Commands => ["sort", "ShipSort", Name];
     public override string Description =>
         "Sorts all items on the ship\n-a: sort all items, even items on cruiser";
     public override string[] Syntax =>
