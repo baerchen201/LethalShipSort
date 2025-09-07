@@ -982,7 +982,7 @@ public class SetItemPositionCommand : Command
                 ChatCommandAPI.ChatCommandAPI.Print(
                     $"Items of type {internalName} will be put on position {(relativeTo == null ? position : relativeTo.transform.InverseTransformPoint(position))} for this game"
                 );
-                break;
+                goto sort;
             case when.always:
                 config!.Value =
                     relativeTo == null
@@ -991,7 +991,61 @@ public class SetItemPositionCommand : Command
                 ChatCommandAPI.ChatCommandAPI.Print(
                     $"Items of type {internalName} will be put on position {(relativeTo == null ? position : relativeTo.transform.InverseTransformPoint(position))}"
                 );
-                return true;
+                sort:
+
+                items = Object.FindObjectsOfType<GrabbableObject>();
+                if (items == null)
+                    break;
+                items = items
+                    .Where(i =>
+                        i is { playerHeldBy: null } and not RagdollGrabbableObject
+                        && string.Equals(
+                            Utils.RemoveClone(i.name),
+                            internalName,
+                            StringComparison.CurrentCultureIgnoreCase
+                        )
+                    )
+                    .ToArray();
+                if (items.Length == 0)
+                    break;
+
+                if (LethalShipSort.Instance.SortDelay < 10)
+                {
+                    int itemsFailed = items.Count(item =>
+                    {
+                        try
+                        {
+                            return !Utils.MoveItem(
+                                item,
+                                new ItemPosition { position = position, parentTo = relativeTo }
+                            );
+                        }
+                        catch (Exception e)
+                        {
+                            LethalShipSort.Logger.LogError(e);
+                            return true;
+                        }
+                    });
+                    error = $"{itemsFailed} items couldn't be sorted";
+                    return itemsFailed == 0;
+                }
+                else
+                {
+                    if (SortItemsCommand.sorting != null)
+                        GameNetworkManager.Instance.localPlayerController.StopCoroutine(
+                            SortItemsCommand.sorting
+                        );
+                    SortItemsCommand.sorting =
+                        GameNetworkManager.Instance.localPlayerController.StartCoroutine(
+                            SortItemsDelayed(
+                                LethalShipSort.Instance.SortDelay,
+                                items,
+                                position,
+                                relativeTo
+                            )
+                        );
+                }
+                break;
         }
 
         return true;
