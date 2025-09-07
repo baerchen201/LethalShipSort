@@ -4,7 +4,7 @@
     <AssemblyName>baer1.ShipSort</AssemblyName>
     <Product>LethalShipSort</Product>
     <!-- Change to whatever version you're currently on. -->
-    <Version>2.2.2</Version>
+    <Version>2.3.0</Version>
   </PropertyGroup>
   <!-- Project Properties -->
   <PropertyGroup>
@@ -36,7 +36,7 @@
   </PropertyGroup>
   <!-- Primary Package References -->
   <ItemGroup>
-    <PackageReference Include="baer1.ChatCommandAPI" Version="0.2.0" />
+    <PackageReference Include="baer1.ChatCommandAPI" Version="0.2.*" />
     <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />
     <PackageReference Include="BepInEx.Core" Version="5.*" PrivateAssets="all" />
     <PackageReference Include="BepInEx.PluginInfoProps" Version="2.*" PrivateAssets="all" />
