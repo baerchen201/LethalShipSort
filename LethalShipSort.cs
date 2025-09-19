@@ -176,6 +176,8 @@ public class LethalShipSort : BaseUnityPlugin
         }
     }
 
+    private static bool notifiedOfIssue3 = false;
+
     public ItemPosition GetPosition(GrabbableObject item)
     {
         var itemName = Utils.RemoveClone(item.name);
@@ -227,20 +229,34 @@ public class LethalShipSort : BaseUnityPlugin
         }
 
         if (itemPosition == null)
-        {
-            itemPosition = item.itemProperties.isScrap
-                ? item.itemProperties.twoHanded
-                    ? DefaultTwoHand
-                    : DefaultOneHand
-                : DefaultTool;
-            Logger.LogDebug(
-                $"<< GetPosition ({(item.itemProperties.isScrap
-                ? item.itemProperties.twoHanded
-                    ? "DefaultTwoHand"
-                    : "DefaultOneHand"
-                : "DefaultTool")}) {itemPosition}"
-            );
-        }
+            try
+            {
+                itemPosition = item.itemProperties.isScrap
+                    ? item.itemProperties.twoHanded
+                        ? DefaultTwoHand
+                        : DefaultOneHand
+                    : DefaultTool;
+                Logger.LogDebug(
+                    $"<< GetPosition ({(item.itemProperties.isScrap
+                        ? item.itemProperties.twoHanded
+                            ? "DefaultTwoHand"
+                            : "DefaultOneHand"
+                        : "DefaultTool")}) {itemPosition}"
+                );
+            }
+            catch (ArgumentException e)
+            {
+                if (!notifiedOfIssue3)
+                {
+                    Logger.LogError("ISSUE #3 DETECTED");
+                    ChatCommandAPI.ChatCommandAPI.PrintError(
+                        "Something went horribly wrong\nThis is a known issue, please comment at https://github.com/baerchen201/LethalShipSort/issues/3 with your log and config files attached."
+                    );
+                    notifiedOfIssue3 = true;
+                }
+                Logger.LogError(e);
+                throw;
+            }
 
         return itemPosition.Value;
     }

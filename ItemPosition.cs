@@ -14,7 +14,7 @@ public struct ItemPosition
             RegexOptions.Multiline
         ).Match(s);
         if (!match.Success)
-            throw new ArgumentException("Invalid format");
+            throw new ArgumentException($"Invalid format ({s})");
         StringBuilder log = new($">> ItemPosition init \"{s}\"");
 
         if (
@@ -22,7 +22,7 @@ public struct ItemPosition
             || !float.TryParse(match.Groups[2].Captures[1].Value, out var y)
             || !float.TryParse(match.Groups[3].Value, out var z)
         )
-            throw new ArgumentException("Invalid float");
+            throw new ArgumentException($"Invalid float ({s})");
         position = new Vector3(x, y, z);
         log.Append($"\n   position is {position}");
 
