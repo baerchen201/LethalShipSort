@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 using UnityEngine;
@@ -21,9 +22,9 @@ public struct ItemPosition
         var ystr = match.Groups[2].Captures[1].Value;
         var zstr = match.Groups[3].Value;
         if (
-            !float.TryParse(xstr, out var x)
-            || !float.TryParse(ystr, out var y)
-            || !float.TryParse(zstr, out var z)
+            !float.TryParse(xstr, NumberStyles.Float, CultureInfo.InvariantCulture, out var x)
+            || !float.TryParse(ystr, NumberStyles.Float, CultureInfo.InvariantCulture, out var y)
+            || !float.TryParse(zstr, NumberStyles.Float, CultureInfo.InvariantCulture, out var z)
         )
             throw new ArgumentException(
                 $"Invalid float ({s}) [\"{xstr}\", \"{ystr}\", \"{zstr}\"]"

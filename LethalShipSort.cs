@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -264,6 +265,9 @@ public class LethalShipSort : BaseUnityPlugin
                             "   Mod information:",
                             $"     {assembly.FullName} compiled with .NET {assembly.ImageRuntimeVersion}",
                             $"     running on {RuntimeInformation.OSDescription} with {RuntimeInformation.FrameworkDescription}",
+                            "   Culture information:",
+                            $"     Current culture:{CultureInfo.CurrentCulture.Name}",
+                            $"     Decimal separator:{CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator}",
                             "   Type information:",
                             $"     float:{typeof(float).AssemblyQualifiedName}",
                             $"     Regex:{typeof(Regex).AssemblyQualifiedName}",
@@ -327,7 +331,14 @@ public class LethalShipSort : BaseUnityPlugin
 
         string a(string value, float expectedValue)
         {
-            if (!float.TryParse(value, out var actualValue))
+            if (
+                !float.TryParse(
+                    value,
+                    NumberStyles.Float,
+                    CultureInfo.InvariantCulture,
+                    out var actualValue
+                )
+            )
                 return $"{value} (expected {expectedValue}): failed";
             else if (!Mathf.Approximately(actualValue, expectedValue))
                 return $"{value} (expected {expectedValue}): mismatch ({actualValue})";
