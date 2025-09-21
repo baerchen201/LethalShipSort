@@ -2,7 +2,14 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Linq;
+using System.Net;
+using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.RegularExpressions;
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
@@ -249,6 +256,64 @@ public class LethalShipSort : BaseUnityPlugin
                 if (!notifiedOfIssue3)
                 {
                     Logger.LogError("ISSUE #3 DETECTED");
+                    var assembly = Assembly.GetExecutingAssembly();
+                    Logger.LogError(
+                        string.Join(
+                            Environment.NewLine,
+                            "Debugging information (please include this when reporting the error):",
+                            "   Mod information:",
+                            $"     {assembly.FullName} compiled with .NET {assembly.ImageRuntimeVersion}",
+                            $"     running on {RuntimeInformation.OSDescription} with {RuntimeInformation.FrameworkDescription}",
+                            "   Type information:",
+                            $"     float:{typeof(float).AssemblyQualifiedName}",
+                            $"     Regex:{typeof(Regex).AssemblyQualifiedName}",
+                            "   Float conversion tests:",
+                            $"     {a("1", 1f)}",
+                            $"     {a("1.0", 1f)}",
+                            $"     {a("2.5", 2.5f)}",
+                            $"     {a("-2.5", -2.5f)}",
+                            $"     {a("-5", -5f)}",
+                            $"     {a($"{-0.5f}", -0.5f)}",
+                            $"     (expected: mismatch) {a("0", 1f)}",
+                            $"     (expected: failure) {a("", 1f)}",
+                            $"     (expected: failure) {a("i'm floating", 1f)}"
+                        )
+                    );
+                    try
+                    {
+                        var sb = new StringBuilder();
+                        using (
+                            var file = File.Open(
+                                Config.ConfigFilePath,
+                                FileMode.Open,
+                                FileAccess.Read
+                            )
+                        )
+                        {
+                            long offset = 0;
+                            var buffer = new byte[16];
+                            int count;
+
+                            while ((count = file.Read(buffer, 0, buffer.Length)) > 0)
+                            {
+                                sb.Append($"{offset:X8}    ");
+                                offset += count;
+
+                                for (var i = 0; i < buffer.Length; i++)
+                                    sb.Append($"{(i < count ? buffer[i].ToString("X2") : "  ")} ");
+
+                                sb.Append("|");
+                                for (var i = 0; i < buffer.Length; i++)
+                                    sb.Append(i < count ? b(buffer[i]) : " ");
+                                sb.AppendLine("|");
+                            }
+                        }
+                        Logger.LogError($"Config file dump:\n{sb}");
+                    }
+                    catch (Exception e2)
+                    {
+                        Logger.LogError($"Error while trying to read config file: {e2}");
+                    }
                     ChatCommandAPI.ChatCommandAPI.PrintError(
                         "Something went horribly wrong\nThis is a known issue, please comment at https://github.com/baerchen201/LethalShipSort/issues/3 with your log and config files attached."
                     );
@@ -259,6 +324,18 @@ public class LethalShipSort : BaseUnityPlugin
             }
 
         return itemPosition.Value;
+
+        string a(string value, float expectedValue)
+        {
+            if (!float.TryParse(value, out var actualValue))
+                return $"{value} (expected {expectedValue}): failed";
+            else if (!Mathf.Approximately(actualValue, expectedValue))
+                return $"{value} (expected {expectedValue}): mismatch ({actualValue})";
+            else
+                return $"{value} (expected {expectedValue}): success";
+        }
+
+        string b(byte value) => value is < 32 or >= 127 ? "." : Encoding.ASCII.GetString([value]);
     }
 
     private void Awake()

@@ -17,12 +17,17 @@ public struct ItemPosition
             throw new ArgumentException($"Invalid format ({s})");
         StringBuilder log = new($">> ItemPosition init \"{s}\"");
 
+        var xstr = match.Groups[2].Captures[0].Value;
+        var ystr = match.Groups[2].Captures[1].Value;
+        var zstr = match.Groups[3].Value;
         if (
-            !float.TryParse(match.Groups[2].Captures[0].Value, out var x)
-            || !float.TryParse(match.Groups[2].Captures[1].Value, out var y)
-            || !float.TryParse(match.Groups[3].Value, out var z)
+            !float.TryParse(xstr, out var x)
+            || !float.TryParse(ystr, out var y)
+            || !float.TryParse(zstr, out var z)
         )
-            throw new ArgumentException($"Invalid float ({s})");
+            throw new ArgumentException(
+                $"Invalid float ({s}) [\"{xstr}\", \"{ystr}\", \"{zstr}\"]"
+            );
         position = new Vector3(x, y, z);
         log.Append($"\n   position is {position}");
 
