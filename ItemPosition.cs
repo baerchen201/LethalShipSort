@@ -97,7 +97,14 @@ public struct ItemPosition
             path += ":";
         }
 
-        return path + $"{position.x},{position.y},{position.z}";
+        return path
+            + string.Format(
+                CultureInfo.InvariantCulture,
+                "{0},{1},{2}",
+                position.x,
+                position.y,
+                position.z
+            );
     }
 
     public Vector3 position;
