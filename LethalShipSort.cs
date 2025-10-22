@@ -379,6 +379,7 @@ public class LethalShipSort : BaseUnityPlugin
         _ = new SortItemsCommand();
         _ = new AutoSortToggle();
         _ = new SetItemPositionCommand();
+        _ = new PrintItemNames();
 
         Logger.LogInfo($"{MyPluginInfo.PLUGIN_GUID} v{MyPluginInfo.PLUGIN_VERSION} has loaded!");
     }
