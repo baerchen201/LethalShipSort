@@ -8,7 +8,10 @@ football, apparatus and beehive), tools are sorted into the cupboard.
 If you don't have the cupboard on the ship, you can return it with the `cup` terminal command. Otherwise, all your items
 will just disappear.
 
-By default, all tools on the cruiser are ignored, you can force include them by running `/sort -a`.
+Using `/sort -a` or `/sort -A` some flags can be bypassed:
+
+- `-a`: `C` flag is ignored, all items on the cruiser will be sorted.
+- `-A`: `C` and `N` flags are ignored, all items will be sorted.
 
 ## Configuring custom positions
 
@@ -25,7 +28,11 @@ For any item in the vanilla game, you can simply open the config file and edit t
 
 The value is formatted as follows:
 
-`parent:x,y,z` or `x,y,z`
+- `parent:x,y,z`
+- `x,y,z` (parent defaults to ship)
+- `parent:x,y,z:flags`
+- `x,y,z:flags`
+- `flags`
 
 The parent is the object relative to which the position is interpreted as.
 If the parent is the storage closet, items will actually be put in the closet.
@@ -42,6 +49,13 @@ Alternatively, there are a couple keywords for common parent objects:
 - `none` or `environment` for the world root \(`Environment`\)
 - `ship` for the ship \(`Environment/HangarShip`\), but you can also just not specify a parent since this is the
   default \(`ship:0,0,0`=`0,0,0`\)
+
+The flags are specified as a string of uppercase letters. The following values are accepted:
+
+- `A`: Item is not automatically sorted, only being moved when the `/sort` command is used.
+- `C`: Item is not moved if it is on the cruiser, unless `-a` or `-A` options are used (convenient for keeping tools on
+  the cruiser).
+- `N`: Item is not sorted at all, unless `-A` option is used.
 
 ### Using the `/put` command
 
@@ -89,6 +103,6 @@ This makes the sorting process slower, but adds the satisfying visual effect.
 ## Autosorting
 
 If you enable the AutoSort config value or use the chat command `/autosort` to toggle it,
-all items will be automatically sorted when you leave a moon.
+all items without the `A` flag will be automatically sorted when you leave a moon.
 
 This only activates when you are the host
