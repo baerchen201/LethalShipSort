@@ -650,9 +650,7 @@ public class LethalShipSort : BaseUnityPlugin
         {
             var i = Instance.roundOverrides.Count;
             Instance.roundOverrides.Clear();
-            Logger.LogDebug(
-                $"roundOverrides cleared (was {i} items, now {Instance.roundOverrides.Count})"
-            );
+            Logger.LogDebug($"roundOverrides cleared (was {i} items)");
         }
     }
 }
