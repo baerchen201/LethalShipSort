@@ -13,14 +13,19 @@ public static class Utils
     public static string RemoveClone(string name) =>
         name.EndsWith(CLONE) ? name[..^CLONE.Length] : name;
 
+    [Obsolete]
     public static bool MoveItem(GrabbableObject item) =>
         LethalShipSort.Instance.ExcludeItems.Contains(RemoveClone(item.name))
         || MoveItem(item, LethalShipSort.Instance.GetPosition(item));
 
     public static bool MoveItem(GrabbableObject item, ItemPosition position) =>
-        position.parentTo == GameObject.Find("Environment/HangarShip/StorageCloset")
-            ? MoveItem(item, position.position, position.parentTo)
-            : MoveItemRelativeTo(item, position.position, position.parentTo);
+        position.position == null
+            ? throw new ArgumentNullException(
+                $"{nameof(ItemPosition)}.{nameof(ItemPosition.position)} can not be null"
+            )
+        : position.parentTo == GameObject.Find("Environment/HangarShip/StorageCloset")
+            ? MoveItem(item, position.position.Value, position.parentTo)
+        : MoveItemRelativeTo(item, position.position.Value, position.parentTo);
 
     public static bool MoveItemRelativeTo(
         GrabbableObject item,

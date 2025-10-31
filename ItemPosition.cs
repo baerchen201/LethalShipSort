@@ -11,11 +11,21 @@ public struct ItemPosition
     public ItemPosition(string s)
     {
         var match = new Regex(
-            @"(?:([\w/\\]+):)?(?:([\d-.]+),){2}([\d-.]+)$",
+            @"(?:([\w/\\]+):)?(?:([\d-.]+),){2}([\d-.]+)(?::([A-Z]+))?$",
             RegexOptions.Multiline
         ).Match(s);
         if (!match.Success)
-            throw new ArgumentException($"Invalid format ({s})");
+        {
+            var flagmatch = new Regex("([A-Z]+)$", RegexOptions.Multiline).Match(s);
+            if (!flagmatch.Success)
+                throw new ArgumentException($"Invalid format ({s})");
+
+            StringBuilder flog = new($">> ItemPosition init flags \"{s}\"");
+            flags = new Flags(flagmatch.Groups[1].Value);
+            LethalShipSort.Logger.LogDebug(flog.ToString());
+            return;
+        }
+
         StringBuilder log = new($">> ItemPosition init \"{s}\"");
 
         var xstr = match.Groups[2].Captures[0].Value;
@@ -30,6 +40,10 @@ public struct ItemPosition
                 $"Invalid float ({s}) [\"{xstr}\", \"{ystr}\", \"{zstr}\"]"
             );
         position = new Vector3(x, y, z);
+
+        flags = new Flags(match.Groups[4].Value);
+        log.Append($"\n   flags are {flags}");
+
         log.Append($"\n   position is {position}");
 
         if (match.Groups[1].Success)
@@ -98,15 +112,56 @@ public struct ItemPosition
         }
 
         return path
-            + string.Format(
-                CultureInfo.InvariantCulture,
-                "{0},{1},{2}",
-                position.x,
-                position.y,
-                position.z
-            );
+            + (
+                position != null
+                    ? string.Format(
+                        CultureInfo.InvariantCulture,
+                        "{0},{1},{2}",
+                        position.Value.x,
+                        position.Value.y,
+                        position.Value.z
+                    )
+                    : string.Empty
+            )
+            + (flags.ToString().Length > 0 ? ':' : string.Empty)
+            + flags;
     }
 
-    public Vector3 position;
+    public struct Flags
+    {
+        public Flags(string s)
+        {
+            foreach (var flag in s)
+                switch (flag)
+                {
+                    case NO_AUTO_SORT:
+                        NoAutoSort = true;
+                        break;
+                    case KEEP_ON_CRUISER:
+                        KeepOnCruiser = true;
+                        break;
+                    case IGNORE:
+                        Ignore = true;
+                        break;
+                    default:
+                        throw new ArgumentException($"Unknown flag ({flag})");
+                }
+        }
+
+        public const char NO_AUTO_SORT = 'A';
+        public bool NoAutoSort;
+
+        public const char KEEP_ON_CRUISER = 'C';
+        public bool KeepOnCruiser;
+
+        public const char IGNORE = 'N';
+        public bool Ignore;
+
+        public override string ToString() =>
+            $"{(NoAutoSort ? NO_AUTO_SORT : string.Empty)}{(KeepOnCruiser ? KEEP_ON_CRUISER : string.Empty)}{(Ignore ? IGNORE : string.Empty)}";
+    }
+
+    public Vector3? position;
     public GameObject? parentTo;
+    public Flags flags;
 }

@@ -1,12 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Text.RegularExpressions;
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
@@ -30,7 +24,11 @@ public class LethalShipSort : BaseUnityPlugin
         get => autoSort.Value;
         set => autoSort.Value = value;
     }
+
+    [Obsolete]
     private ConfigEntry<string> excludeItems = null!;
+
+    [Obsolete]
     public string[] ExcludeItems
     {
         get => excludeItems.Value.Split(",");
@@ -120,7 +118,7 @@ public class LethalShipSort : BaseUnityPlugin
             Dictionary<string, ItemPosition> positions = new();
             foreach (var i in customItemPositions.Value.Split(';'))
             {
-                string[] split = i.Split(':', 2);
+                string[] split = i.Split(":", 2);
                 if (split.Length != 2)
                 {
                     Logger.LogDebug("split.Length != 2");
@@ -145,10 +143,6 @@ public class LethalShipSort : BaseUnityPlugin
             }
             return positions;
         }
-        set =>
-            customItemPositions.Value = value
-                .Select(kvp => $"{kvp.Key}:{kvp.Value}")
-                .Join(null, ";");
     }
     public Dictionary<string, ItemPosition?> VanillaItemPositions
     {
@@ -176,8 +170,6 @@ public class LethalShipSort : BaseUnityPlugin
             return positions;
         }
     }
-
-    private static bool notifiedOfIssue3 = false;
 
     public ItemPosition GetPosition(GrabbableObject item)
     {
@@ -230,116 +222,43 @@ public class LethalShipSort : BaseUnityPlugin
         }
 
         if (itemPosition == null)
-            try
-            {
-                itemPosition = item.itemProperties.isScrap
-                    ? item.itemProperties.twoHanded
-                        ? DefaultTwoHand
-                        : DefaultOneHand
-                    : DefaultTool;
-                Logger.LogDebug(
-                    $"<< GetPosition ({(item.itemProperties.isScrap
-                        ? item.itemProperties.twoHanded
-                            ? "DefaultTwoHand"
-                            : "DefaultOneHand"
-                        : "DefaultTool")}) {itemPosition}"
-                );
-            }
-            catch (ArgumentException e)
-            {
-                if (!notifiedOfIssue3)
-                {
-                    Logger.LogError("ISSUE #3 DETECTED");
-                    var assembly = Assembly.GetExecutingAssembly();
-                    Logger.LogError(
-                        string.Join(
-                            Environment.NewLine,
-                            "Debugging information (please include this when reporting the error):",
-                            "   Mod information:",
-                            $"     {assembly.FullName} compiled with .NET {assembly.ImageRuntimeVersion}",
-                            $"     running on {RuntimeInformation.OSDescription} with {RuntimeInformation.FrameworkDescription}",
-                            "   Culture information:",
-                            $"     Current culture:{CultureInfo.CurrentCulture.Name}",
-                            $"     Decimal separator:{CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator}",
-                            "   Type information:",
-                            $"     float:{typeof(float).AssemblyQualifiedName}",
-                            $"     Regex:{typeof(Regex).AssemblyQualifiedName}",
-                            "   Float conversion tests:",
-                            $"     {a("1", 1f)}",
-                            $"     {a("1.0", 1f)}",
-                            $"     {a("2.5", 2.5f)}",
-                            $"     {a("-2.5", -2.5f)}",
-                            $"     {a("-5", -5f)}",
-                            $"     {a($"{-0.5f}", -0.5f)}",
-                            $"     (expected: mismatch) {a("0", 1f)}",
-                            $"     (expected: failure) {a("", 1f)}",
-                            $"     (expected: failure) {a("i'm floating", 1f)}"
-                        )
-                    );
-                    try
-                    {
-                        var sb = new StringBuilder();
-                        using (
-                            var file = File.Open(
-                                Config.ConfigFilePath,
-                                FileMode.Open,
-                                FileAccess.Read
-                            )
-                        )
-                        {
-                            long offset = 0;
-                            var buffer = new byte[16];
-                            int count;
-
-                            while ((count = file.Read(buffer, 0, buffer.Length)) > 0)
-                            {
-                                sb.Append($"{offset:X8}    ");
-                                offset += count;
-
-                                for (var i = 0; i < buffer.Length; i++)
-                                    sb.Append($"{(i < count ? buffer[i].ToString("X2") : "  ")} ");
-
-                                sb.Append("|");
-                                for (var i = 0; i < buffer.Length; i++)
-                                    sb.Append(i < count ? b(buffer[i]) : " ");
-                                sb.AppendLine("|");
-                            }
-                        }
-                        Logger.LogError($"Config file dump:\n{sb}");
-                    }
-                    catch (Exception e2)
-                    {
-                        Logger.LogError($"Error while trying to read config file: {e2}");
-                    }
-                    ChatCommandAPI.ChatCommandAPI.PrintError(
-                        "Something went horribly wrong\nThis is a known issue, please comment at https://github.com/baerchen201/LethalShipSort/issues/3 with your log and config files attached."
-                    );
-                    notifiedOfIssue3 = true;
-                }
-                Logger.LogError(e);
-                throw;
-            }
-
-        return itemPosition.Value;
-
-        string a(string value, float expectedValue)
         {
-            if (
-                !float.TryParse(
-                    value,
-                    NumberStyles.Float,
-                    CultureInfo.InvariantCulture,
-                    out var actualValue
-                )
-            )
-                return $"{value} (expected {expectedValue}): failed";
-            else if (!Mathf.Approximately(actualValue, expectedValue))
-                return $"{value} (expected {expectedValue}): mismatch ({actualValue})";
-            else
-                return $"{value} (expected {expectedValue}): success";
+            itemPosition = item.itemProperties.isScrap
+                ? item.itemProperties.twoHanded
+                    ? DefaultTwoHand
+                    : DefaultOneHand
+                : DefaultTool;
+            Logger.LogDebug(
+                $"<< GetPosition ({(item.itemProperties.isScrap
+                    ? item.itemProperties.twoHanded
+                        ? "DefaultTwoHand"
+                        : "DefaultOneHand"
+                    : "DefaultTool")}) {itemPosition}"
+            );
+        }
+        else if (itemPosition.Value.position == null)
+        {
+            var defaultItemPosition = item.itemProperties.isScrap
+                ? item.itemProperties.twoHanded
+                    ? DefaultTwoHand
+                    : DefaultOneHand
+                : DefaultTool;
+            itemPosition = new ItemPosition
+            {
+                flags = itemPosition.Value.flags,
+                position = defaultItemPosition.position,
+                parentTo = defaultItemPosition.parentTo,
+            };
+            Logger.LogDebug(
+                $"<< GetPosition ({(item.itemProperties.isScrap
+                    ? item.itemProperties.twoHanded
+                        ? "DefaultTwoHand"
+                        : "DefaultOneHand"
+                    : "DefaultTool")} with flags) {itemPosition}"
+            );
         }
 
-        string b(byte value) => value is < 32 or >= 127 ? "." : Encoding.ASCII.GetString([value]);
+        return itemPosition.Value;
     }
 
     private void Awake()
@@ -394,13 +313,16 @@ public class LethalShipSort : BaseUnityPlugin
 
     private void BindItemPositionConfigs()
     {
-        // Item globals
+#pragma warning disable CS0612 // Type or member is obsolete
         excludeItems = Config.Bind(
             "Items",
             "ExcludeItems",
             "",
-            "Comma-separated list of item names to never sort (by internal name)"
+            "[OBSOLETE] Use 'N' flag instead\nComma-separated list of item names to never sort (by internal name)"
         );
+#pragma warning restore CS0612
+
+        // Item globals
         defaultOneHand = Config.Bind(
             "Items",
             "DefaultOneHand",
@@ -416,7 +338,7 @@ public class LethalShipSort : BaseUnityPlugin
         defaultTool = Config.Bind(
             "Items",
             "DefaultTool",
-            $"cupboard:-2,0.6,{CUPBOARD_BOTTOM}",
+            $"cupboard:-2,0.6,{CUPBOARD_BOTTOM}:{ItemPosition.Flags.KEEP_ON_CRUISER}",
             "Default position for tool items."
         );
 
@@ -450,7 +372,7 @@ public class LethalShipSort : BaseUnityPlugin
         ItemPositionConfig("RedLocustHive", "Bee hive", new Vector3(-6.8f, 4.4f, -5.65f));
         ItemPositionConfig("DiyFlashbang", "Homemade Flashbang");
         ItemPositionConfig("PickleJar", "Jar of pickles");
-        ItemPositionConfig("KnifeItem", "Kitchen knife");
+        ItemPositionConfig("KnifeItem", "Kitchen knife", defaultKeepOnCruiser: true);
         ItemPositionConfig("Cog", "Large axle");
         ItemPositionConfig("LaserPointer", "Laser pointer");
         ItemPositionConfig("Magic7Ball", "Magic 7 ball");
@@ -467,7 +389,12 @@ public class LethalShipSort : BaseUnityPlugin
         ItemPositionConfig("Remote");
         ItemPositionConfig("FancyRing", "Wedding ring");
         ItemPositionConfig("RubberDucky", "Rubber ducky");
-        ItemPositionConfig("ShotgunItem", "Double-barrel", new Vector3(8.75f, 2f, -5.5f));
+        ItemPositionConfig(
+            "ShotgunItem",
+            "Double-barrel",
+            new Vector3(8.75f, 2f, -5.5f),
+            defaultKeepOnCruiser: true
+        );
         ItemPositionConfig("SoccerBall", "Soccer ball", new Vector3(-6.8f, 4.4f, -7.75f));
         ItemPositionConfig("SteeringWheel", "Steering wheel");
         ItemPositionConfig("StopSign", "Stop sign");
@@ -583,23 +510,32 @@ public class LethalShipSort : BaseUnityPlugin
     private ConfigEntry<string> BindItemPositionConfig(string itemName) =>
         Config.Bind("Items", itemName, "", $"Position for the {itemName} item.");
 
-    private void ItemPositionConfig(string internalName, string itemName, bool isTool = false)
+    private void ItemPositionConfig(
+        string internalName,
+        string itemName,
+        bool isTool = false,
+        bool? defaultKeepOnCruiser = null
+    )
     {
         itemPositions[internalName] = Config.Bind(
             isTool ? "Tools" : "Scrap",
             internalName,
-            "",
+            $"{(defaultKeepOnCruiser ?? isTool ? ItemPosition.Flags.KEEP_ON_CRUISER : string.Empty)}",
             $"Position for the {itemName} item."
         );
         vanillaItems[itemName.ToLower()] = internalName.ToLower();
     }
 
-    private void ItemPositionConfig(string itemName, bool isTool = false)
+    private void ItemPositionConfig(
+        string itemName,
+        bool isTool = false,
+        bool? defaultKeepOnCruiser = null
+    )
     {
         itemPositions[itemName] = Config.Bind(
             isTool ? "Tools" : "Scrap",
             itemName,
-            "",
+            $"{(defaultKeepOnCruiser ?? isTool ? ItemPosition.Flags.KEEP_ON_CRUISER : string.Empty)}",
             $"Position for the {itemName} item."
         );
         vanillaItems[itemName.ToLower()] = itemName.ToLower();
@@ -610,13 +546,24 @@ public class LethalShipSort : BaseUnityPlugin
         string itemName,
         Vector3 defaultPosition,
         bool isTool = false,
-        bool? defaultInCupboard = null
+        bool? defaultInCupboard = null,
+        bool? defaultKeepOnCruiser = null
     )
     {
         itemPositions[internalName] = Config.Bind(
             isTool ? "Tools" : "Scrap",
             internalName,
-            $"{(defaultInCupboard ?? isTool ? "cupboard:" : "")}{Math.Round(defaultPosition.x, 2)},{Math.Round(defaultPosition.y, 2)},{Math.Round(defaultPosition.z, 2)}",
+            string.Format(
+                CultureInfo.InvariantCulture,
+                "{0}{1},{2},{3}{4}",
+                defaultInCupboard ?? isTool ? "cupboard:" : "",
+                defaultPosition.x,
+                defaultPosition.y,
+                defaultPosition.z,
+                defaultKeepOnCruiser ?? isTool
+                    ? ":" + ItemPosition.Flags.KEEP_ON_CRUISER
+                    : string.Empty
+            ),
             $"Position for the {itemName} item."
         );
         vanillaItems[itemName.ToLower()] = internalName.ToLower();
@@ -626,13 +573,24 @@ public class LethalShipSort : BaseUnityPlugin
         string itemName,
         Vector3 defaultPosition,
         bool isTool = false,
-        bool? defaultInCupboard = null
+        bool? defaultInCupboard = null,
+        bool? defaultKeepOnCruiser = null
     )
     {
         itemPositions[itemName] = Config.Bind(
             isTool ? "Tools" : "Scrap",
             itemName,
-            $"{(defaultInCupboard ?? isTool ? "cupboard:" : "")}{Math.Round(defaultPosition.x, 2)},{Math.Round(defaultPosition.y, 2)},{Math.Round(defaultPosition.z, 2)}",
+            string.Format(
+                CultureInfo.InvariantCulture,
+                "{0}{1},{2},{3}{4}",
+                defaultInCupboard ?? isTool ? "cupboard:" : "",
+                defaultPosition.x,
+                defaultPosition.y,
+                defaultPosition.z,
+                defaultKeepOnCruiser ?? isTool
+                    ? ":" + ItemPosition.Flags.KEEP_ON_CRUISER
+                    : string.Empty
+            ),
             $"Position for the {itemName} item."
         );
         vanillaItems[itemName.ToLower()] = itemName.ToLower();

@@ -16,7 +16,7 @@ public class SortItemsCommand : Command
     public override string Description =>
         "Sorts all items on the ship\n-a: sort all items, even items on cruiser";
     public override string[] Syntax =>
-        ["", "[ -a | --all ]", "<item> { here | there } [ once | game | always ]"];
+        ["", "[ -a | -A ]", "<item> { here | there } [ once | game | always ]"];
 
     public override bool Invoke(string[] args, Dictionary<string, string> kwargs, out string error)
     {
@@ -24,14 +24,28 @@ public class SortItemsCommand : Command
         return StartOfRound.Instance.inShipPhase
             && (
                 args.Length < 2
-                    ? SortAllItems(args.Contains("-a") || args.Contains("--all"), out error)
+                    ? SortAllItems(
+                        args.Contains("-A")
+                            || args.Contains("--all", StringComparer.InvariantCultureIgnoreCase)
+                                ? ForceLevel.IncludeAll
+                            : args.Contains("-a") ? ForceLevel.IncludeCruiser
+                            : ForceLevel.None,
+                        out error
+                    )
                     : SetItemPositionCommand.SetItemPosition(args, out error)
             );
     }
 
     internal static Coroutine? sorting;
 
-    private static bool SortAllItems(bool all, out string error)
+    private enum ForceLevel
+    {
+        None,
+        IncludeCruiser,
+        IncludeAll,
+    }
+
+    private static bool SortAllItems(ForceLevel forceLevel, out string error)
     {
         error = "No items to sort";
         GameNetworkManager.Instance.localPlayerController.DropAllHeldItemsAndSync();
@@ -48,37 +62,26 @@ public class SortItemsCommand : Command
 
         var cars = Object.FindObjectsOfType<VehicleController>() ?? [];
 
-        var scrap = items
-            .Where(i =>
-                i.itemProperties.isScrap
-                && (
-                    all
-                    || !(
-                        Utils.RemoveClone(i.name) == "ShotgunItem"
-                        && cars.Any(car => i.gameObject.transform.parent == car.transform)
-                    )
-                )
-            )
-            .ToArray();
-        var tools = items
-            .Where(i =>
-                !i.itemProperties.isScrap
-                && (
-                    all
-                    || cars.All(car =>
-                        i.gameObject.transform.parent != car.gameObject.gameObject.transform
-                    )
-                )
-            )
-            .ToArray();
+        var scrap = FilterFlags(
+            items
+                .Where(i => i.itemProperties.isScrap)
+                .ToDictionary(i => i, item => LethalShipSort.Instance.GetPosition(item))
+        );
+
+        var tools = FilterFlags(
+            items
+                .Where(i => !i.itemProperties.isScrap)
+                .ToDictionary(i => i, item => LethalShipSort.Instance.GetPosition(item))
+        );
+
         if (LethalShipSort.Instance.SortDelay < 10)
         {
             var scrapFailed = 0;
             var toolsFailed = 0;
 
-            if (scrap.Length != 0)
+            if (scrap.Count != 0)
                 scrapFailed = SortItems(scrap);
-            if (tools.Length != 0)
+            if (tools.Count != 0)
                 toolsFailed = SortItems(tools);
 
             error =
@@ -98,6 +101,23 @@ public class SortItemsCommand : Command
         }
 
         return true;
+
+        Dictionary<GrabbableObject, ItemPosition> FilterFlags(
+            Dictionary<GrabbableObject, ItemPosition> dict
+        )
+        {
+            return dict.Where(kvp =>
+                    (forceLevel == ForceLevel.IncludeAll || !kvp.Value.flags.Ignore)
+                    && (
+                        forceLevel >= ForceLevel.IncludeCruiser
+                        || !(
+                            kvp.Value.flags.KeepOnCruiser
+                            && cars.Any(car => kvp.Key.transform.parent == car.transform)
+                        )
+                    )
+                )
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        }
     }
 
     private static void AutoSortAllItems()
@@ -118,31 +138,24 @@ public class SortItemsCommand : Command
 
             var cars = Object.FindObjectsOfType<VehicleController>() ?? [];
 
-            var scrap = items
-                .Where(i =>
-                    i.itemProperties.isScrap
-                    && !(
-                        Utils.RemoveClone(i.name) == "ShotgunItem"
-                        && cars.Any(car => i.gameObject.transform.parent == car.transform)
-                    )
-                )
-                .ToArray();
-            var tools = items
-                .Where(i =>
-                    !i.itemProperties.isScrap
-                    && cars.All(car =>
-                        i.gameObject.transform.parent != car.gameObject.gameObject.transform
-                    )
-                )
-                .ToArray();
+            var scrap = FilterFlags(
+                items
+                    .Where(i => i.itemProperties.isScrap)
+                    .ToDictionary(i => i, item => LethalShipSort.Instance.GetPosition(item))
+            );
+            var tools = FilterFlags(
+                items
+                    .Where(i => !i.itemProperties.isScrap)
+                    .ToDictionary(i => i, item => LethalShipSort.Instance.GetPosition(item))
+            );
             if (LethalShipSort.Instance.SortDelay < 10)
             {
                 var scrapFailed = 0;
                 var toolsFailed = 0;
 
-                if (scrap.Length != 0)
+                if (scrap.Count != 0)
                     scrapFailed = SortItems(scrap);
-                if (tools.Length != 0)
+                if (tools.Count != 0)
                     toolsFailed = SortItems(tools);
 
                 if (scrapFailed != 0 || toolsFailed != 0)
@@ -165,6 +178,21 @@ public class SortItemsCommand : Command
                     )
                 );
             }
+            return;
+
+            Dictionary<GrabbableObject, ItemPosition> FilterFlags(
+                Dictionary<GrabbableObject, ItemPosition> dict
+            )
+            {
+                return dict.Where(kvp =>
+                        kvp.Value.flags is { Ignore: false, NoAutoSort: false }
+                        && !(
+                            kvp.Value.flags.KeepOnCruiser
+                            && cars.Any(car => kvp.Key.transform.parent == car.transform)
+                        )
+                    )
+                    .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+            }
         }
         catch (Exception e)
         {
@@ -177,19 +205,19 @@ public class SortItemsCommand : Command
 
     public static IEnumerator SortAllItemsDelayed(
         uint delay,
-        GrabbableObject[] scrap,
-        GrabbableObject[] tools,
+        Dictionary<GrabbableObject, ItemPosition> scrap,
+        Dictionary<GrabbableObject, ItemPosition> tools,
         string errorPrefix = "Error running command"
     )
     {
         var scrapFailed = 0;
         var toolsFailed = 0;
 
-        foreach (var item in scrap)
+        foreach (var kvp in scrap)
         {
             try
             {
-                if (!Utils.MoveItem(item))
+                if (!Utils.MoveItem(kvp.Key, kvp.Value))
                     scrapFailed++;
             }
             catch (Exception e)
@@ -200,11 +228,11 @@ public class SortItemsCommand : Command
 
             yield return new WaitForSeconds(delay / 1000f);
         }
-        foreach (var item in tools)
+        foreach (var kvp in tools)
         {
             try
             {
-                if (!Utils.MoveItem(item))
+                if (!Utils.MoveItem(kvp.Key, kvp.Value))
                     toolsFailed++;
             }
             catch (Exception e)
@@ -227,12 +255,12 @@ public class SortItemsCommand : Command
             ChatCommandAPI.ChatCommandAPI.Print("Finished sorting items");
     }
 
-    public static int SortItems(GrabbableObject[] items) =>
-        items.Count(item =>
+    public static int SortItems(Dictionary<GrabbableObject, ItemPosition> items) =>
+        items.Count(kvp =>
         {
             try
             {
-                return !Utils.MoveItem(item);
+                return !Utils.MoveItem(kvp.Key, kvp.Value);
             }
             catch (Exception e)
             {
