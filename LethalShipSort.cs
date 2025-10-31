@@ -1320,13 +1320,27 @@ public static class Utils
 
     public static bool MoveItem(GrabbableObject item, ItemPosition position) =>
         position.parentTo == GameObject.Find("Environment/HangarShip/StorageCloset")
-            ? MoveItem(item, position.position, position.parentTo)
-            : MoveItemRelativeTo(item, position.position, position.parentTo);
+            ? (
+                position.floorYRot == null
+                    ? MoveItem(item, position.position, position.parentTo)
+                    : MoveItem(item, position.position, position.parentTo, position.floorYRot.Value)
+            )
+            : (
+                position.floorYRot == null
+                    ? MoveItemRelativeTo(item, position.position, position.parentTo)
+                    : MoveItemRelativeTo(
+                        item,
+                        position.position,
+                        position.parentTo,
+                        position.floorYRot.Value
+                    )
+            );
 
     public static bool MoveItemRelativeTo(
         GrabbableObject item,
         Vector3 position,
-        GameObject? relativeTo
+        GameObject? relativeTo,
+        int floorYRot = -1
     )
     {
         LethalShipSort.Logger.LogDebug(
@@ -1384,12 +1398,17 @@ public static class Utils
             true,
             true,
             position,
-            -1
+            floorYRot
         );
         return true;
     }
 
-    public static bool MoveItem(GrabbableObject item, Vector3 position, GameObject parentTo)
+    public static bool MoveItem(
+        GrabbableObject item,
+        Vector3 position,
+        GameObject parentTo,
+        int floorYRot = 0
+    )
     {
         LethalShipSort.Logger.LogDebug(
             $">> Moving item {RemoveClone(item.name)} to position {position} in {RemoveClone(parentTo.name)}"
@@ -1433,14 +1452,14 @@ public static class Utils
             true,
             position,
             item,
-            0
+            floorYRot
         );
         GameNetworkManager.Instance.localPlayerController.ThrowObjectServerRpc(
             item.NetworkObject,
             true,
             true,
             position,
-            0
+            floorYRot
         );
         GameNetworkManager.Instance.localPlayerController.PlaceGrabbableObject(
             parentTo.transform,

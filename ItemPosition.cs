@@ -11,7 +11,7 @@ public struct ItemPosition
     public ItemPosition(string s)
     {
         var match = new Regex(
-            @"(?:([\w/\\]+):)?(?:([\d-.]+),){2}([\d-.]+)$",
+            @"(?:([\w/\\]+):)?(?:([\d-.]+),){2}([\d-.]+)(?:,([\d-.]+))?$",
             RegexOptions.Multiline
         ).Match(s);
         if (!match.Success)
@@ -21,6 +21,7 @@ public struct ItemPosition
         var xstr = match.Groups[2].Captures[0].Value;
         var ystr = match.Groups[2].Captures[1].Value;
         var zstr = match.Groups[3].Value;
+        var rstr = match.Groups[4].Value;
         if (
             !float.TryParse(xstr, NumberStyles.Float, CultureInfo.InvariantCulture, out var x)
             || !float.TryParse(ystr, NumberStyles.Float, CultureInfo.InvariantCulture, out var y)
@@ -31,6 +32,15 @@ public struct ItemPosition
             );
         position = new Vector3(x, y, z);
         log.Append($"\n   position is {position}");
+        if (match.Groups[4].Success)
+        {
+            if (!int.TryParse(rstr, NumberStyles.Integer, CultureInfo.InvariantCulture, out var r))
+                throw new ArgumentException($"Invalid int ({s}) \"{rstr}\"");
+            floorYRot = r;
+            log.Append($"\n   rotation is {floorYRot}");
+        }
+        else
+            log.Append($"\n   rotation not specified");
 
         if (match.Groups[1].Success)
             switch (match.Groups[1].Value.ToLower().Trim('/', '\\'))
@@ -104,9 +114,15 @@ public struct ItemPosition
                 position.x,
                 position.y,
                 position.z
+            )
+            + (
+                floorYRot == null
+                    ? string.Empty
+                    : string.Format(CultureInfo.InvariantCulture, ",{0}", floorYRot)
             );
     }
 
     public Vector3 position;
     public GameObject? parentTo;
+    public int? floorYRot;
 }
