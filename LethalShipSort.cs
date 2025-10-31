@@ -306,7 +306,7 @@ public class LethalShipSort : BaseUnityPlugin
         defaultTool = Config.Bind(
             "Items",
             "DefaultTool",
-            $"cupboard:-2,0.6,{CUPBOARD_BOTTOM}:{ItemPosition.Flags.KEEP_ON_CRUISER}",
+            $"cupboard:-2,0.6,{CUPBOARD_BOTTOM},0:{ItemPosition.Flags.KEEP_ON_CRUISER}",
             "Default position for tool items."
         );
 
@@ -368,7 +368,8 @@ public class LethalShipSort : BaseUnityPlugin
             "ShotgunItem",
             "Double-barrel",
             new Vector3(8.75f, 2f, -5.5f),
-            defaultKeepOnCruiser: true
+            defaultKeepOnCruiser: true,
+            defaultFloorYRot: 0
         );
         ItemPositionConfig("SoccerBall", "Soccer ball", new Vector3(-6.8f, 4.4f, -7.75f));
         ItemPositionConfig("SteeringWheel", "Steering wheel");
@@ -392,56 +393,70 @@ public class LethalShipSort : BaseUnityPlugin
             "WalkieTalkie",
             "Walkie-talkie",
             new Vector3(-1.4f, 0.6f, CUPBOARD_TOP),
-            true
+            true,
+            defaultFloorYRot: 0
         );
         ItemPositionConfig(
             "BBFlashlight",
             "Flashlight",
             new Vector3(-1.3f, 0.2f, CUPBOARD_MIDDLE_1),
-            true
+            true,
+            defaultFloorYRot: 0
         );
         ItemPositionConfig(
             "ShovelItem",
             "Shovel",
             new Vector3(-1.5f, 0.3f, CUPBOARD_MIDDLE_2),
-            true
+            true,
+            defaultFloorYRot: 0
         );
         ItemPositionConfig(
             "LockPickerItem",
             "Lockpicker",
             new Vector3(-2f, 0.5f, CUPBOARD_TOP),
-            true
+            true,
+            defaultFloorYRot: 0
         );
         ItemPositionConfig(
             "FlashlightItem",
             "Pro-flashlight",
             new Vector3(-1.3f, 0.65f, CUPBOARD_MIDDLE_1),
-            true
+            true,
+            defaultFloorYRot: 0
         );
         ItemPositionConfig(
             "StunGrenade",
             "Stun grenade",
             new Vector3(-1.2f, 0.5f, CUPBOARD_MIDDLE_1),
-            true
+            true,
+            defaultFloorYRot: 0
         );
-        ItemPositionConfig("Boombox", new Vector3(-0.3f, 0.5f, CUPBOARD_ABOVE), true);
+        ItemPositionConfig(
+            "Boombox",
+            new Vector3(-0.3f, 0.5f, CUPBOARD_ABOVE),
+            true,
+            defaultFloorYRot: 0
+        );
         ItemPositionConfig(
             "TZPChemical",
             "TZP-Inhalant",
             new Vector3(-0.55f, 0.2f, CUPBOARD_MIDDLE_1),
-            true
+            true,
+            defaultFloorYRot: 0
         );
         ItemPositionConfig(
             "PatcherGunItem",
             "Zap gun",
             new Vector3(-1.1f, 0.6f, CUPBOARD_TOP),
-            true
+            true,
+            defaultFloorYRot: 0
         );
         ItemPositionConfig(
             "JetpackItem",
             "Jetpack",
             new Vector3(-0.3f, 0.2f, CUPBOARD_BOTTOM),
-            true
+            true,
+            defaultFloorYRot: 0
         );
         ItemPositionConfig("ExtensionLadderItem", "Extension ladder", true);
         ItemPositionConfig("RadarBoosterDevice", "Radar booster", true);
@@ -449,28 +464,37 @@ public class LethalShipSort : BaseUnityPlugin
             "SprayPaintItem",
             "Spray paint",
             new Vector3(-1.7f, 0.5f, CUPBOARD_MIDDLE_1),
-            true
+            true,
+            defaultFloorYRot: 0
         );
         ItemPositionConfig(
             "WeedKillerItem",
             "Weed killer",
             new Vector3(-2.05f, 0.5f, CUPBOARD_MIDDLE_1),
-            true
+            true,
+            defaultFloorYRot: 0
         );
         ItemPositionConfig(
             "BeltBagItem",
             "Belt bag",
             new Vector3(-0.35f, 0.5f, CUPBOARD_TOP - 0.1f),
-            true
+            true,
+            defaultFloorYRot: 0
         );
         // ItemPositionConfig("CompanyCruiser", "Company Cruiser"); // :)
 
-        ItemPositionConfig("Key", new Vector3(-0.3f, 0.6f, CUPBOARD_MIDDLE_2), true);
+        ItemPositionConfig(
+            "Key",
+            new Vector3(-0.3f, 0.6f, CUPBOARD_MIDDLE_2),
+            true,
+            defaultFloorYRot: 0
+        );
         ItemPositionConfig(
             "ShotgunShell",
             "Shotgun Shell",
             new Vector3(-0.3f, 0.6f, CUPBOARD_MIDDLE_1),
-            true
+            true,
+            defaultFloorYRot: 0
         );
 
         // Custom item positions
@@ -519,7 +543,8 @@ public class LethalShipSort : BaseUnityPlugin
         Vector3 defaultPosition,
         bool isTool = false,
         bool? defaultInCupboard = null,
-        bool? defaultKeepOnCruiser = null
+        bool? defaultKeepOnCruiser = null,
+        int? defaultFloorYRot = null
     )
     {
         itemPositions[internalName] = Config.Bind(
@@ -527,11 +552,14 @@ public class LethalShipSort : BaseUnityPlugin
             internalName,
             string.Format(
                 CultureInfo.InvariantCulture,
-                "{0}{1},{2},{3}{4}",
+                "{0}{1},{2},{3}{4}{5}",
                 defaultInCupboard ?? isTool ? "cupboard:" : "",
                 defaultPosition.x,
                 defaultPosition.y,
                 defaultPosition.z,
+                defaultFloorYRot != null
+                    ? string.Format(CultureInfo.InvariantCulture, ",{0}", defaultFloorYRot)
+                    : string.Empty,
                 defaultKeepOnCruiser ?? isTool
                     ? ":" + ItemPosition.Flags.KEEP_ON_CRUISER
                     : string.Empty
@@ -546,7 +574,8 @@ public class LethalShipSort : BaseUnityPlugin
         Vector3 defaultPosition,
         bool isTool = false,
         bool? defaultInCupboard = null,
-        bool? defaultKeepOnCruiser = null
+        bool? defaultKeepOnCruiser = null,
+        int? defaultFloorYRot = null
     )
     {
         itemPositions[itemName] = Config.Bind(
@@ -554,11 +583,14 @@ public class LethalShipSort : BaseUnityPlugin
             itemName,
             string.Format(
                 CultureInfo.InvariantCulture,
-                "{0}{1},{2},{3}{4}",
+                "{0}{1},{2},{3}{4}{5}",
                 defaultInCupboard ?? isTool ? "cupboard:" : "",
                 defaultPosition.x,
                 defaultPosition.y,
                 defaultPosition.z,
+                defaultFloorYRot != null
+                    ? string.Format(CultureInfo.InvariantCulture, ",{0}", defaultFloorYRot)
+                    : string.Empty,
                 defaultKeepOnCruiser ?? isTool
                     ? ":" + ItemPosition.Flags.KEEP_ON_CRUISER
                     : string.Empty

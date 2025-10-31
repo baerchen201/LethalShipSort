@@ -1,6 +1,5 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using UnityEngine;
 using Random = System.Random;
 
@@ -19,13 +18,26 @@ public static class Utils
                 $"{nameof(ItemPosition)}.{nameof(ItemPosition.position)} can not be null"
             )
         : position.parentTo == GameObject.Find("Environment/HangarShip/StorageCloset")
-            ? MoveItem(item, position.position.Value, position.parentTo, position.flags)
-        : MoveItemRelativeTo(item, position.position.Value, position.parentTo, position.flags);
+            ? MoveItem(
+                item,
+                position.position.Value,
+                position.parentTo,
+                position.floorYRot ?? -1,
+                position.flags
+            )
+        : MoveItemRelativeTo(
+            item,
+            position.position.Value,
+            position.parentTo,
+            position.floorYRot ?? -1,
+            position.flags
+        );
 
     public static bool MoveItemRelativeTo(
         GrabbableObject item,
         Vector3 position,
         GameObject? relativeTo,
+        int floorYRot,
         ItemPosition.Flags flags
     )
     {
@@ -70,14 +82,15 @@ public static class Utils
             true,
             true,
             position,
-            item
+            item,
+            floorYRot
         );
         GameNetworkManager.Instance.localPlayerController.ThrowObjectServerRpc(
             item.NetworkObject,
             true,
             true,
             position,
-            -1
+            floorYRot
         );
         return true;
     }
@@ -86,6 +99,7 @@ public static class Utils
         GrabbableObject item,
         Vector3 position,
         GameObject parentTo,
+        int floorYRot,
         ItemPosition.Flags flags
     )
     {
@@ -129,14 +143,14 @@ public static class Utils
             true,
             position,
             item,
-            0
+            floorYRot
         );
         GameNetworkManager.Instance.localPlayerController.ThrowObjectServerRpc(
             item.NetworkObject,
             true,
             true,
             position,
-            0
+            floorYRot
         );
         GameNetworkManager.Instance.localPlayerController.PlaceGrabbableObject(
             parentTo.transform,

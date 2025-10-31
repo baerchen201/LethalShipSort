@@ -11,7 +11,7 @@ public struct ItemPosition
     public ItemPosition(string s)
     {
         var match = new Regex(
-            @"(?:([\w/\\]+):)?(?:([\d-.]+),){2}([\d-.]+)(?::([A-Z]+))?$",
+            @"(?:([\w/\\]+):)?(?:([\d-.]+),){2}([\d-.]+)(?:,([\d-.]+))?(?::([A-Z]+))?$",
             RegexOptions.Multiline
         ).Match(s);
         if (!match.Success)
@@ -40,11 +40,21 @@ public struct ItemPosition
                 $"Invalid float ({s}) [\"{xstr}\", \"{ystr}\", \"{zstr}\"]"
             );
         position = new Vector3(x, y, z);
-
-        flags = new Flags(match.Groups[4].Value);
-        log.Append($"\n   flags are {flags}");
-
         log.Append($"\n   position is {position}");
+
+        var rstr = match.Groups[4].Value;
+        if (match.Groups[4].Success)
+        {
+            if (!int.TryParse(rstr, NumberStyles.Integer, CultureInfo.InvariantCulture, out var r))
+                throw new ArgumentException($"Invalid integer ({s}) \"{rstr}\"");
+            floorYRot = r;
+            log.Append($"\n   rotation is {floorYRot}");
+        }
+        else
+            log.Append($"\n   rotation not specified");
+
+        flags = new Flags(match.Groups[5].Value);
+        log.Append($"\n   flags are {flags}");
 
         if (match.Groups[1].Success)
             switch (match.Groups[1].Value.ToLower().Trim('/', '\\'))
@@ -123,6 +133,11 @@ public struct ItemPosition
                     )
                     : string.Empty
             )
+            + (
+                floorYRot == null
+                    ? string.Empty
+                    : string.Format(CultureInfo.InvariantCulture, ",{0}", floorYRot)
+            )
             + (flags.ToString().Length > 0 ? ':' : string.Empty)
             + flags;
     }
@@ -169,5 +184,6 @@ public struct ItemPosition
 
     public Vector3? position;
     public GameObject? parentTo;
+    public int? floorYRot;
     public Flags flags;
 }
