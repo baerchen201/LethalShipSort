@@ -348,6 +348,7 @@ public class LethalShipSort : BaseUnityPlugin
         itemPositions["LungApparatusTurnedOff"] = itemPositions["LungApparatus"];
         ItemPositionConfig("HandBell", "Brass bell");
         ItemPositionConfig("BigBolt", "Big bolt");
+        ItemPositionConfig("Bone");
         ItemPositionConfig("BinFullOfBottles", "Bottles");
         ItemPositionConfig("Hairbrush", "Hair brush");
         ItemPositionConfig("Candy");
@@ -359,20 +360,25 @@ public class LethalShipSort : BaseUnityPlugin
         ItemPositionConfig("ControlPad", "Control pad");
         ItemPositionConfig("CookieMoldPan", "Cookie mold pan");
         ItemPositionConfig("Dustpan", "Dust pan");
+        ItemPositionConfig("Ear");
         ItemPositionConfig("EasterEgg", "Easter egg");
         ItemPositionConfig("KiwiBabyItem", "Egg", new Vector3(4.85f, 2f, -4));
         ItemPositionConfig("EggBeater", "Egg beater");
         ItemPositionConfig("FancyLamp", "Fancy lamp");
         ItemPositionConfig("Flask");
+        ItemPositionConfig("SeveredFootLOD0", "Foot");
         ItemPositionConfig("GarbageLid", "Garbage lid");
         ItemPositionConfig("GiftBox", "Gift box");
         ItemPositionConfig("GoldBar", "Gold Bar");
         ItemPositionConfig("FancyGlass", "Golden cup");
+        ItemPositionConfig("SeveredHandLOD0", "Hand");
+        ItemPositionConfig("HeartContainer", "Heart");
         ItemPositionConfig("Hairdryer");
         ItemPositionConfig("RedLocustHive", "Bee hive", new Vector3(-6.8f, 4.4f, -5.65f));
         ItemPositionConfig("DiyFlashbang", "Homemade Flashbang");
         ItemPositionConfig("PickleJar", "Jar of pickles");
         ItemPositionConfig("KnifeItem", "Kitchen knife", defaultKeepOnCruiser: true);
+        ItemPositionConfig("SeveredThighLOD0", "Knee");
         ItemPositionConfig("Cog", "Large axle");
         ItemPositionConfig("LaserPointer", "Laser pointer");
         ItemPositionConfig("Magic7Ball", "Magic 7 ball");
@@ -387,6 +393,7 @@ public class LethalShipSort : BaseUnityPlugin
         ItemPositionConfig("FishTestProp", "Plastic fish");
         ItemPositionConfig("RedSodaCan", "Red soda");
         ItemPositionConfig("Remote");
+        ItemPositionConfig("RibcageBone", "Ribcage");
         ItemPositionConfig("FancyRing", "Wedding ring");
         ItemPositionConfig("RubberDucky", "Rubber ducky");
         ItemPositionConfig(
@@ -402,6 +409,7 @@ public class LethalShipSort : BaseUnityPlugin
         ItemPositionConfig("Dentures", "Teeth");
         ItemPositionConfig("ToiletPaperRolls", "Toilet paper");
         ItemPositionConfig("Toothpaste");
+        ItemPositionConfig("Tongue");
         ItemPositionConfig("ToyCube", "Toy cube");
         ItemPositionConfig("RobotToy", "Robot Toy");
         ItemPositionConfig("ToyTrain", "Toy train");
