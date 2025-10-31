@@ -308,12 +308,7 @@ public class SetItemPositionCommand : Command
                         Vector3.down,
                         out var hitInfo,
                         80f,
-                        (int)(
-                            Utils.Layers.Room
-                            | Utils.Layers.InteractableObject
-                            | Utils.Layers.Colliders
-                            | Utils.Layers.PlaceableShipObjects
-                        ),
+                        Utils.LAYER_MASK,
                         QueryTriggerInteraction.Ignore
                     )
                 )
@@ -342,12 +337,7 @@ public class SetItemPositionCommand : Command
                             .forward,
                         out hitInfo,
                         80f,
-                        (int)(
-                            Utils.Layers.Room
-                            | Utils.Layers.InteractableObject
-                            | Utils.Layers.Colliders
-                            | Utils.Layers.PlaceableShipObjects
-                        ),
+                        Utils.LAYER_MASK,
                         QueryTriggerInteraction.Ignore
                     )
                 )

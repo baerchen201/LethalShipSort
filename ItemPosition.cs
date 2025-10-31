@@ -143,6 +143,9 @@ public struct ItemPosition
                     case IGNORE:
                         Ignore = true;
                         break;
+                    case EXACT:
+                        Exact = true;
+                        break;
                     default:
                         throw new ArgumentException($"Unknown flag ({flag})");
                 }
@@ -157,8 +160,11 @@ public struct ItemPosition
         public const char IGNORE = 'N';
         public bool Ignore;
 
+        public const char EXACT = 'X';
+        public bool Exact;
+
         public override string ToString() =>
-            $"{(NoAutoSort ? NO_AUTO_SORT : string.Empty)}{(KeepOnCruiser ? KEEP_ON_CRUISER : string.Empty)}{(Ignore ? IGNORE : string.Empty)}";
+            $"{(NoAutoSort ? NO_AUTO_SORT : string.Empty)}{(KeepOnCruiser ? KEEP_ON_CRUISER : string.Empty)}{(Ignore ? IGNORE : string.Empty)}{(Exact ? EXACT : string.Empty)}";
     }
 
     public Vector3? position;

@@ -56,6 +56,7 @@ The flags are specified as a string of uppercase letters. The following values a
 - `C`: Item is not moved if it is on the cruiser, unless `-a` or `-A` options are used (convenient for keeping tools on
   the cruiser).
 - `N`: Item is not sorted at all, unless `-A` option is used.
+- `X`: Item is placed at the exact position specified, without raycasting below.
 
 ### Using the `/put` command
 
@@ -89,8 +90,7 @@ By default, all positions will trace a line downwards to find the closest spot o
 the items will be put there.
 That way, no items will be floating mid-air.
 
-However, if you prefer your items to be at the exact position you specified, you can disable this with the `UseRaycast`
-config value.
+However, if you prefer your items to be at the exact position you specified, you can disable this with the `X` flag.
 
 ### Delayed sorting
 

@@ -35,14 +35,17 @@ public class LethalShipSort : BaseUnityPlugin
         set => excludeItems.Value = value.Join(null, ",");
     }
 
+    [Obsolete]
     private ConfigEntry<bool> useRaycast = null!;
-    private ConfigEntry<uint> sortDelay = null!;
 
+    [Obsolete]
     public bool UseRaycast
     {
         get => useRaycast.Value;
         set => useRaycast.Value = value;
     }
+
+    private ConfigEntry<uint> sortDelay = null!;
     public uint SortDelay
     {
         get => sortDelay.Value;
@@ -272,12 +275,14 @@ public class LethalShipSort : BaseUnityPlugin
             false,
             "Whether to automatically sort the ship when leaving a planet (toggle ingame with /autosort)"
         );
+#pragma warning disable CS0612 // Type or member is obsolete
         useRaycast = Config.Bind(
             "General",
             "UseRaycast",
             true,
-            "If enabled, items will be put on the closest surface below the given position, instead of the exact coordinates"
+            "[OBSOLETE] Use 'X' flag instead\nIf enabled, items will be put on the closest surface below the given position, instead of the exact coordinates"
         );
+#pragma warning restore CS0612
         sortDelay = Config.Bind(
             "General",
             "SortDelay",
@@ -326,7 +331,7 @@ public class LethalShipSort : BaseUnityPlugin
         defaultOneHand = Config.Bind(
             "Items",
             "DefaultOneHand",
-            "-2.25,2,-5.25",
+            "-2.25,3,-5.25",
             "Default position for one-handed items."
         );
         defaultTwoHand = Config.Bind(

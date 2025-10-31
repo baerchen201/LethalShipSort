@@ -24,13 +24,14 @@ public static class Utils
                 $"{nameof(ItemPosition)}.{nameof(ItemPosition.position)} can not be null"
             )
         : position.parentTo == GameObject.Find("Environment/HangarShip/StorageCloset")
-            ? MoveItem(item, position.position.Value, position.parentTo)
-        : MoveItemRelativeTo(item, position.position.Value, position.parentTo);
+            ? MoveItem(item, position.position.Value, position.parentTo, position.flags)
+        : MoveItemRelativeTo(item, position.position.Value, position.parentTo, position.flags);
 
     public static bool MoveItemRelativeTo(
         GrabbableObject item,
         Vector3 position,
-        GameObject? relativeTo
+        GameObject? relativeTo,
+        ItemPosition.Flags flags
     )
     {
         LethalShipSort.Logger.LogDebug(
@@ -46,21 +47,14 @@ public static class Utils
 
         if (relativeTo == null)
             relativeTo = ship;
-        if (LethalShipSort.Instance.UseRaycast)
+        if (!flags.Exact)
             if (
                 Physics.Raycast(
                     relativeTo.transform.TransformPoint(position),
                     Vector3.down,
                     out var hitInfo,
                     80f,
-                    (int)(
-                        Layers.Room
-                        | Layers.InteractableObject
-                        | Layers.Colliders
-                        | Layers.Vehicle
-                        | Layers.Railing
-                        | Layers.PlaceableShipObjects
-                    ),
+                    LAYER_MASK,
                     QueryTriggerInteraction.Ignore
                 )
             )
@@ -93,21 +87,24 @@ public static class Utils
         return true;
     }
 
-    public static bool MoveItem(GrabbableObject item, Vector3 position, GameObject parentTo)
+    public static bool MoveItem(
+        GrabbableObject item,
+        Vector3 position,
+        GameObject parentTo,
+        ItemPosition.Flags flags
+    )
     {
         LethalShipSort.Logger.LogDebug(
             $">> Moving item {RemoveClone(item.name)} to position {position} in {RemoveClone(parentTo.name)}"
         );
-        if (LethalShipSort.Instance.UseRaycast)
+        if (!flags.Exact)
             if (
                 Physics.Raycast(
                     parentTo.transform.TransformPoint(position),
                     Vector3.down,
                     out var hitInfo,
                     80f,
-                    (int)(
-                        Layers.Room | Layers.InteractableObject | Layers.Colliders | Layers.Vehicle
-                    ),
+                    LAYER_MASK,
                     QueryTriggerInteraction.Ignore
                 )
             )
@@ -186,9 +183,11 @@ public static class Utils
         return path;
     }
 
+    internal const int LAYER_MASK = (int)(Layers.Room | Layers.Colliders | Layers.Railing);
+
     [Flags]
     [SuppressMessage("ReSharper", "UnusedMember.Global")]
-    internal enum Layers
+    private enum Layers
     {
         Default = 1,
         TransparentFX = 2,
