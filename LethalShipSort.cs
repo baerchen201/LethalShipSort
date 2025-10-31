@@ -375,6 +375,15 @@ public class LethalShipSort : BaseUnityPlugin
         _ = new PrintItemNames();
 
         Logger.LogInfo($"{MyPluginInfo.PLUGIN_GUID} v{MyPluginInfo.PLUGIN_VERSION} has loaded!");
+        return;
+
+        void Patch()
+        {
+            Harmony ??= new Harmony(MyPluginInfo.PLUGIN_GUID);
+            Logger.LogDebug("Patching...");
+            Harmony.PatchAll();
+            Logger.LogDebug("Finished patching!");
+        }
     }
 
     private const float CUPBOARD_ABOVE = 3.2f;
@@ -627,17 +636,6 @@ public class LethalShipSort : BaseUnityPlugin
             $"Position for the {itemName} item."
         );
         vanillaItems[itemName.ToLower()] = itemName.ToLower();
-    }
-
-    internal static void Patch()
-    {
-        Harmony ??= new Harmony(MyPluginInfo.PLUGIN_GUID);
-
-        Logger.LogDebug("Patching...");
-
-        Harmony.PatchAll();
-
-        Logger.LogDebug("Finished patching!");
     }
 
     [HarmonyPatch(typeof(NetworkManager), nameof(NetworkManager.StartClient))]
