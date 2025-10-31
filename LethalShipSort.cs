@@ -25,26 +25,6 @@ public class LethalShipSort : BaseUnityPlugin
         set => autoSort.Value = value;
     }
 
-    [Obsolete]
-    private ConfigEntry<string> excludeItems = null!;
-
-    [Obsolete]
-    public string[] ExcludeItems
-    {
-        get => excludeItems.Value.Split(",");
-        set => excludeItems.Value = value.Join(null, ",");
-    }
-
-    [Obsolete]
-    private ConfigEntry<bool> useRaycast = null!;
-
-    [Obsolete]
-    public bool UseRaycast
-    {
-        get => useRaycast.Value;
-        set => useRaycast.Value = value;
-    }
-
     private ConfigEntry<uint> sortDelay = null!;
     public uint SortDelay
     {
@@ -275,14 +255,6 @@ public class LethalShipSort : BaseUnityPlugin
             false,
             "Whether to automatically sort the ship when leaving a planet (toggle ingame with /autosort)"
         );
-#pragma warning disable CS0612 // Type or member is obsolete
-        useRaycast = Config.Bind(
-            "General",
-            "UseRaycast",
-            true,
-            "[OBSOLETE] Use 'X' flag instead\nIf enabled, items will be put on the closest surface below the given position, instead of the exact coordinates"
-        );
-#pragma warning restore CS0612
         sortDelay = Config.Bind(
             "General",
             "SortDelay",
@@ -318,15 +290,6 @@ public class LethalShipSort : BaseUnityPlugin
 
     private void BindItemPositionConfigs()
     {
-#pragma warning disable CS0612 // Type or member is obsolete
-        excludeItems = Config.Bind(
-            "Items",
-            "ExcludeItems",
-            "",
-            "[OBSOLETE] Use 'N' flag instead\nComma-separated list of item names to never sort (by internal name)"
-        );
-#pragma warning restore CS0612
-
         // Item globals
         defaultOneHand = Config.Bind(
             "Items",
@@ -518,10 +481,6 @@ public class LethalShipSort : BaseUnityPlugin
             "Semicolon-separated list of internal item names and their positions."
         );
     }
-
-    [Obsolete]
-    private ConfigEntry<string> BindItemPositionConfig(string itemName) =>
-        Config.Bind("Items", itemName, "", $"Position for the {itemName} item.");
 
     private void ItemPositionConfig(
         string internalName,
