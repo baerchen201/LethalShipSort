@@ -17,7 +17,7 @@ public static class Utils
             ? throw new ArgumentNullException(
                 $"{nameof(ItemPosition)}.{nameof(ItemPosition.position)} can not be null"
             )
-        : position.parentTo == GameObject.Find("Environment/HangarShip/StorageCloset")
+        : position.flags.Parent && position.parentTo != null
             ? MoveItem(
                 item,
                 position.position.Value,

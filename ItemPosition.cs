@@ -158,6 +158,9 @@ public struct ItemPosition
                     case IGNORE:
                         Ignore = true;
                         break;
+                    case PARENT:
+                        Parent = true;
+                        break;
                     case EXACT:
                         Exact = true;
                         break;
@@ -175,11 +178,45 @@ public struct ItemPosition
         public const char IGNORE = 'N';
         public bool Ignore;
 
+        public const char PARENT = 'P';
+        public bool Parent;
+
         public const char EXACT = 'X';
         public bool Exact;
 
         public override string ToString() =>
-            $"{(NoAutoSort ? NO_AUTO_SORT : string.Empty)}{(KeepOnCruiser ? KEEP_ON_CRUISER : string.Empty)}{(Ignore ? IGNORE : string.Empty)}{(Exact ? EXACT : string.Empty)}";
+            $"{(NoAutoSort ? NO_AUTO_SORT : string.Empty)}{(KeepOnCruiser ? KEEP_ON_CRUISER : string.Empty)}{(Ignore ? IGNORE : string.Empty)}{(Parent ? PARENT : string.Empty)}{(Exact ? EXACT : string.Empty)}";
+
+        public Flags FilterPositionRelated() => this & new Flags { Parent = true, Exact = true };
+
+        public Flags FilterFilteringRelated() =>
+            this
+            & new Flags
+            {
+                NoAutoSort = true,
+                KeepOnCruiser = true,
+                Ignore = true,
+            };
+
+        public static Flags operator |(Flags _this, Flags other) =>
+            new()
+            {
+                NoAutoSort = _this.NoAutoSort || other.NoAutoSort,
+                KeepOnCruiser = _this.KeepOnCruiser || other.KeepOnCruiser,
+                Ignore = _this.Ignore || other.Ignore,
+                Parent = _this.Parent || other.Parent,
+                Exact = _this.Exact || other.Exact,
+            };
+
+        public static Flags operator &(Flags _this, Flags other) =>
+            new()
+            {
+                NoAutoSort = _this.NoAutoSort && other.NoAutoSort,
+                KeepOnCruiser = _this.KeepOnCruiser && other.KeepOnCruiser,
+                Ignore = _this.Ignore && other.Ignore,
+                Parent = _this.Parent && other.Parent,
+                Exact = _this.Exact && other.Exact,
+            };
     }
 
     public Vector3? position;

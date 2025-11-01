@@ -232,7 +232,9 @@ public class LethalShipSort : BaseUnityPlugin
                 : DefaultTool;
             itemPosition = new ItemPosition
             {
-                flags = itemPosition.Value.flags,
+                flags =
+                    itemPosition.Value.flags.FilterFilteringRelated()
+                    | defaultItemPosition.flags.FilterPositionRelated(),
                 position = defaultItemPosition.position,
                 parentTo = defaultItemPosition.parentTo,
             };
@@ -256,7 +258,7 @@ public class LethalShipSort : BaseUnityPlugin
         configVersion = Config.Bind(
             "General",
             "ConfigVersion",
-            1,
+            2,
             "The version of this config file"
         );
         autoSort = Config.Bind(
@@ -316,7 +318,7 @@ public class LethalShipSort : BaseUnityPlugin
         defaultTool = Config.Bind(
             "Items",
             "DefaultTool",
-            $"cupboard:-2,0.6,{CUPBOARD_BOTTOM},0:{ItemPosition.Flags.KEEP_ON_CRUISER}",
+            $"cupboard:-2,0.6,{CUPBOARD_BOTTOM},0:{ItemPosition.Flags.KEEP_ON_CRUISER}{ItemPosition.Flags.PARENT}",
             "Default position for tool items."
         );
 
@@ -547,6 +549,12 @@ public class LethalShipSort : BaseUnityPlugin
         vanillaItems[itemName.ToLower()] = itemName.ToLower();
     }
 
+    private static string Flags(bool keepOnCruiser, bool inCupboard) =>
+        keepOnCruiser || inCupboard
+            ? $":{(keepOnCruiser ? ItemPosition.Flags.KEEP_ON_CRUISER : string.Empty)}{
+                (inCupboard ? ItemPosition.Flags.PARENT : string.Empty)}"
+            : string.Empty;
+
     private void ItemPositionConfig(
         string internalName,
         string itemName,
@@ -570,9 +578,7 @@ public class LethalShipSort : BaseUnityPlugin
                 defaultFloorYRot != null
                     ? string.Format(CultureInfo.InvariantCulture, ",{0}", defaultFloorYRot)
                     : string.Empty,
-                defaultKeepOnCruiser ?? isTool
-                    ? ":" + ItemPosition.Flags.KEEP_ON_CRUISER
-                    : string.Empty
+                Flags(defaultKeepOnCruiser ?? isTool, defaultInCupboard ?? isTool)
             ),
             $"Position for the {itemName} item."
         );
@@ -601,9 +607,7 @@ public class LethalShipSort : BaseUnityPlugin
                 defaultFloorYRot != null
                     ? string.Format(CultureInfo.InvariantCulture, ",{0}", defaultFloorYRot)
                     : string.Empty,
-                defaultKeepOnCruiser ?? isTool
-                    ? ":" + ItemPosition.Flags.KEEP_ON_CRUISER
-                    : string.Empty
+                Flags(defaultKeepOnCruiser ?? isTool, defaultInCupboard ?? isTool)
             ),
             $"Position for the {itemName} item."
         );
