@@ -18,6 +18,10 @@ public class LethalShipSort : BaseUnityPlugin
     internal static new ManualLogSource Logger { get; private set; } = null!;
     internal static Harmony? Harmony { get; set; }
 
+    private ConfigEntry<int> configVersion = null!;
+    public int ConfigVersion => configVersion.Value;
+    public int CurrentConfigVersion => (int)configVersion.DefaultValue;
+
     private ConfigEntry<bool> autoSort = null!;
     public bool AutoSort
     {
@@ -249,6 +253,12 @@ public class LethalShipSort : BaseUnityPlugin
         Logger = base.Logger;
         Instance = this;
 
+        configVersion = Config.Bind(
+            "General",
+            "ConfigVersion",
+            1,
+            "The version of this config file"
+        );
         autoSort = Config.Bind(
             "General",
             "AutoSort",
@@ -611,6 +621,40 @@ public class LethalShipSort : BaseUnityPlugin
             var i = Instance.roundOverrides.Count;
             Instance.roundOverrides.Clear();
             Logger.LogDebug($"roundOverrides cleared (was {i} items)");
+        }
+    }
+
+    [HarmonyPatch(typeof(HUDManager), nameof(HUDManager.Start))]
+    internal class HUDManager_Start
+    {
+        // ReSharper disable once UnusedMember.Local
+        private static void Postfix()
+        {
+            if (Instance.ConfigVersion < Instance.CurrentConfigVersion)
+            {
+                ChatCommandAPI.ChatCommandAPI.PrintWarning(
+                    $"[{MyPluginInfo.PLUGIN_NAME}] Your configuration file is outdated.\n"
+                        + $"Please verify your configuration file and update it accordingly.\n"
+                        + $"<indent=10px>Expected: v{Instance.CurrentConfigVersion}\n"
+                        + $"Config: v{Instance.ConfigVersion}</indent>"
+                );
+                Logger.LogWarning(
+                    $"Config file outdated: Expected v{Instance.CurrentConfigVersion}, got v{Instance.ConfigVersion}"
+                );
+            }
+            else if (Instance.ConfigVersion > Instance.CurrentConfigVersion)
+            {
+                ChatCommandAPI.ChatCommandAPI.PrintWarning(
+                    $"[{MyPluginInfo.PLUGIN_NAME}] Your configuration file is using a newer, unsupported format.\n"
+                        + $"There have been changes to the configuration file format which could cause errors.\n"
+                        + $"Please verify your configuration file and mod version.\n"
+                        + $"<indent=10px>Expected: v{Instance.CurrentConfigVersion}\n"
+                        + $"Config: v{Instance.ConfigVersion}</indent>"
+                );
+                Logger.LogWarning(
+                    $"Config file unsupported: Expected v{Instance.CurrentConfigVersion}, got v{Instance.ConfigVersion}"
+                );
+            }
         }
     }
 }
