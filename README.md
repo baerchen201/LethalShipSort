@@ -29,9 +29,14 @@ For any item in the vanilla game, you can simply open the config file and edit t
 The value is formatted as follows:
 
 - `parent:x,y,z`
+- `parent:x,y,z,rot` (rotation specified in degrees, must be integer (only whole numbers), negative values may cause
+  issues)
 - `x,y,z` (parent defaults to ship)
+- `x,y,z,rot`
 - `parent:x,y,z:flags`
+- `parent:x,y,z,rot:flags`
 - `x,y,z:flags`
+- `x,y,z,rot:flags`
 - `flags`
 
 The parent is the object relative to which the position is interpreted as.
@@ -82,7 +87,9 @@ Examples:
 The `customItemPositions` config value contains a list of other item positions by name.
 This can be used to sort mod items, or items from future updates.
 
-Format: `itemname:parent:x,y,z;itemname:parent:x,y,z`
+Format: `itemname:position;itemname:position`
+
+For example: `MyScrapItem:0,3,-5.25,0;MyToolItem:cupboard:-1.7,0.5,3.2:C;MyUnsortedItem:N`
 
 ### Raycasting
 
