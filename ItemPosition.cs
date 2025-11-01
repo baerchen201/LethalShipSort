@@ -61,22 +61,27 @@ public struct ItemPosition
             {
                 case "cupboard":
                 case "closet":
+                case "storage":
+                case "storagecloset":
                     log.Append("\n   parent object is closet");
                     parentTo = GameObject.Find("Environment/HangarShip/StorageCloset");
                     if (parentTo == null)
                         throw new Exception("Storage closet not found");
                     break;
                 case "file":
-                case "cabinet":
-                case "cabinets":
-                case "file_cabinet":
-                case "file_cabinets":
                 case "filecabinet":
                 case "filecabinets":
                     log.Append("\n   parent object is file cabinet");
                     parentTo = GameObject.Find("Environment/HangarShip/FileCabinet");
                     if (parentTo == null)
                         throw new Exception("File cabinet not found");
+                    break;
+                case "bunkbed":
+                case "bunkbeds":
+                    log.Append("\n   parent object is bunkbeds");
+                    parentTo = GameObject.Find("Environment/HangarShip/Bunkbeds");
+                    if (parentTo == null)
+                        throw new Exception("Bunkbeds not found");
                     break;
                 case "ship":
                     log.Append("\n   parent object is ship");

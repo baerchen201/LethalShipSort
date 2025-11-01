@@ -51,6 +51,7 @@ Alternatively, there are a couple keywords for common parent objects:
 
 - `closet` or `cupboard` for the storage closet \(`Environment/HangarShip/StorageCloset`\)
 - `file` or `filecabinet` for the file cabinet \(`Environment/HangarShip/FileCabinet`\)
+- `bunkbeds` for the bunkbeds \(`Environment/HangarShip/Bunkbeds`\)
 - `none` or `environment` for the world root \(`Environment`\)
 - `ship` for the ship \(`Environment/HangarShip`\), but you can also just not specify a parent since this is the
   default \(`ship:0,0,0`=`0,0,0`\)
