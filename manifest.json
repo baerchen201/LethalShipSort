@@ -1,6 +1,6 @@
 {
   "name": "ShipSort",
-  "version_number": "3.1.0",
+  "version_number": "3.2.0",
   "website_url": "https://github.com/baerchen201/LethalShipSort",
   "description": "Highly customizable mod that sorts and organizes all items on your ship",
   "dependencies": [
