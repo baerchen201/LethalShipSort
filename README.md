@@ -108,6 +108,12 @@ add an interval between moving items.
 Setting this to 250ms means, that only about 4 items will be sorted per second.
 This makes the sorting process slower, but adds the satisfying visual effect.
 
+### Random offset
+
+### Random offset
+
+The `RandomOffset` config entry specifies the maximum distance an item can be moved randomly from its configured position when being placed. This spreads items out a bit so stacks don't end up exactly on top of each other, making it obvious there are multiple items instead of a single overlapped stack.
+
 ## Autosorting
 
 If you enable the AutoSort config value or use the chat command `/autosort` to toggle it,
