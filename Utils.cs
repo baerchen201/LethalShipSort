@@ -66,9 +66,8 @@ public static class Utils
                 )
             )
                 position = Randomize(
-                    ship.transform.InverseTransformPoint(
-                        hitInfo.point + item.itemProperties.verticalOffset * Vector3.up
-                    )
+                    ship.transform.InverseTransformPoint(hitInfo.point + item.itemProperties.verticalOffset * Vector3.up),
+                    LethalShipSort.Instance.RandomOffsetValue
                 );
             else
             {
@@ -76,7 +75,7 @@ public static class Utils
                 return false;
             }
         else
-            position = Randomize(position + item.itemProperties.verticalOffset * Vector3.up);
+            position = Randomize(position + item.itemProperties.verticalOffset * Vector3.up, LethalShipSort.Instance.RandomOffsetValue);
 
         GameNetworkManager.Instance.localPlayerController.SetObjectAsNoLongerHeld(
             true,
@@ -122,7 +121,7 @@ public static class Utils
                         hitInfo.point
                             + item.itemProperties.verticalOffset * Vector3.up
                             - new Vector3(0f, 0.05f, 0f),
-                        0.02f
+                        LethalShipSort.Instance.RandomOffsetValue
                     )
                 );
             else
@@ -135,7 +134,7 @@ public static class Utils
                 position
                     + item.itemProperties.verticalOffset * Vector3.up
                     - new Vector3(0f, 0.05f, 0f),
-                0.02f
+                LethalShipSort.Instance.RandomOffsetValue
             );
 
         GameNetworkManager.Instance.localPlayerController.SetObjectAsNoLongerHeld(
@@ -169,7 +168,7 @@ public static class Utils
 
     public static Vector3 Randomize(Vector3 position, float maxDistance = 0.05f)
     {
-        if (maxDistance <= 0)
+        if (maxDistance < 0)
             throw new ArgumentException("Invalid maxDistance (must be positive)");
         Random rng = new();
         return new Vector3(
