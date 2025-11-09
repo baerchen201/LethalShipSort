@@ -36,6 +36,13 @@ public class LethalShipSort : BaseUnityPlugin
         set => sortDelay.Value = value;
     }
 
+    private ConfigEntry<float> randomOffset = null!;
+    public float RandomOffsetValue
+    {
+        get => randomOffset.Value;
+        set => randomOffset.Value = value;
+    }
+
     private ConfigEntry<string> defaultOneHand = null!;
     private ConfigEntry<string> defaultTwoHand = null!;
     private ConfigEntry<string> defaultTool = null!;
@@ -272,6 +279,12 @@ public class LethalShipSort : BaseUnityPlugin
             "SortDelay",
             (uint)0,
             "The amount of milliseconds to wait between moving items, mostly for the satisfying visual effect.\nYou can't pick anything up while sorting items."
+        );
+        randomOffset = Config.Bind(
+            "General",
+            "RandomOffset",
+            0.1f,
+            "The maximum random offset applied to item positions."
         );
 
         BindItemPositionConfigs();
