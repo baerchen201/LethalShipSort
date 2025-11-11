@@ -66,7 +66,9 @@ public static class Utils
                 )
             )
                 position = Randomize(
-                    ship.transform.InverseTransformPoint(hitInfo.point + item.itemProperties.verticalOffset * Vector3.up),
+                    ship.transform.InverseTransformPoint(
+                        hitInfo.point + item.itemProperties.verticalOffset * Vector3.up
+                    ),
                     LethalShipSort.Instance.RandomOffsetValue
                 );
             else
@@ -75,7 +77,10 @@ public static class Utils
                 return false;
             }
         else
-            position = Randomize(position + item.itemProperties.verticalOffset * Vector3.up, LethalShipSort.Instance.RandomOffsetValue);
+            position = Randomize(
+                position + item.itemProperties.verticalOffset * Vector3.up,
+                LethalShipSort.Instance.RandomOffsetValue
+            );
 
         GameNetworkManager.Instance.localPlayerController.SetObjectAsNoLongerHeld(
             true,
