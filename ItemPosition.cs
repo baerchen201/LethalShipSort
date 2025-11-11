@@ -11,7 +11,7 @@ public struct ItemPosition
     public ItemPosition(string s)
     {
         var match = new Regex(
-            @"(?:([\w/\\]+):)?(?:([\d-.]+),){2}([\d-.]+)(?:,([\d-]+))?(?:,([\d-.]+))?(?::([A-Z]+))?$",
+            @"(?:([\w/\\]+):)?(?:([\d-.]+),){2}([\d-.]+)(?:,([\d]+))?(?:,([\d.]+))?(?::([A-Z]+))?$",
             RegexOptions.Multiline
         ).Match(s);
         if (!match.Success)

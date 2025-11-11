@@ -5,8 +5,8 @@ While in orbit, simply enter `/sort` in the game chat. This will sort all items.
 By default, scrap is sorted into two piles of two- and one-handed items (with some exceptions, like the whoopie cushion,
 football, apparatus and beehive), tools are sorted into the cupboard.
 
-If you don't have the cupboard on the ship, you can return it with the `cup` terminal command. Otherwise, all your items
-will just disappear.
+If you don't have the cupboard on the ship, you can return it with the `cup` terminal command.
+Otherwise, all your tools will just disappear.
 
 Using `/sort -a` or `/sort -A` some flags can be bypassed:
 
@@ -18,51 +18,46 @@ Using `/sort -a` or `/sort -A` some flags can be bypassed:
 This mod can be configured to place any item anywhere, however this process may require some technical knowledge and a
 lot of patience.
 
-You can change the default positions of one- and two-handed items, as well as tools, by changing the `default...` config
-values.
-They use the same format as described [below](#for-vanilla-items)
+You can change the default positions of one- and two-handed items, as well as tools,
+by changing the `default...` config values. They use the same format as described below.
 
 ### For vanilla items
 
 For any item in the vanilla game, you can simply open the config file and edit the corresponding config value.
 
-The value is formatted as follows:
+A config value is made up of the following components (`[parent:]coordinates[:flags]`), of which only the coordinates
+are required:
 
-- `parent:x,y,z`
-- `parent:x,y,z,rot` (rotation specified in degrees, must be integer (only whole numbers), negative values may cause
-  issues)
-- `x,y,z` (parent defaults to ship)
-- `x,y,z,rot`
-- `parent:x,y,z:flags`
-- `parent:x,y,z,rot:flags`
-- `x,y,z:flags`
-- `x,y,z,rot:flags`
-- `flags`
-
-The parent is the object relative to which the position is interpreted as.
-If the parent is the storage closet, items will actually be put in the closet.
-
-The parent object is specified as a path to the object based on the scene root \(for example
-`Environment/HangarShip/StorageCloset`,
-use [UnityExplorer](https://thunderstore.io/c/lethal-company/p/LethalCompanyModding/Yukieji_UnityExplorer/) to find this
-for any object\).
-
-Alternatively, there are a couple keywords for common parent objects:
-
-- `closet` or `cupboard` for the storage closet \(`Environment/HangarShip/StorageCloset`\)
-- `file` or `filecabinet` for the file cabinet \(`Environment/HangarShip/FileCabinet`\)
-- `bunkbeds` for the bunkbeds \(`Environment/HangarShip/Bunkbeds`\)
-- `none` or `environment` for the world root \(`Environment`\)
-- `ship` for the ship \(`Environment/HangarShip`\), but you can also just not specify a parent since this is the
-  default \(`ship:0,0,0`=`0,0,0`\)
-
-The flags are specified as a string of uppercase letters. The following values are accepted:
-
-- `A`: Item is not automatically sorted, only being moved when the `/sort` command is used.
-- `C`: Item is not moved if it is on the cruiser, unless `-a` or `-A` options are used (convenient for keeping tools on
-  the cruiser).
-- `N`: Item is not sorted at all, unless `-A` option is used.
-- `X`: Item is placed at the exact position specified, without raycasting below.
+- `parent`: The parent is the object relative to which the position is interpreted as. If the `P` flag is set,
+  the item is actually parented to the given object.
+    - The parent object is specified as a path to the object based on the scene root
+      (for example `Environment/HangarShip/StorageCloset`,
+      use [UnityExplorer](https://thunderstore.io/c/lethal-company/p/LethalCompanyModding/Yukieji_UnityExplorer/) to
+      find this for any object).
+    - Alternatively, there are a couple keywords for common parent objects:
+        - `closet` or `cupboard` for the storage closet (`Environment/HangarShip/StorageCloset`)
+        - `file` or `filecabinet` for the file cabinet (`Environment/HangarShip/FileCabinet`)
+        - `bunkbeds` for the bunkbeds (`Environment/HangarShip/Bunkbeds`)
+        - `none` or `environment` for the world root (`Environment`)
+        - `ship` for the ship (`Environment/HangarShip`), but you can also just not specify a parent since this is the
+          default (`ship:0,0,0` is equivalent to `0,0,0`)
+- coordinates `x,y,z[,floorYRot][,randomOffset]`:
+    - `x,y,z`: the coordinates where to place the object relative to `parent`
+    - `floorYRot`: an optional Y rotation value, if unspecified rotation is not changed.
+      This has to be a positive integer (whole number)
+    - `randomOffset`: an optional value which specifies the maximum distance an item can be moved randomly from its
+      configured position when being placed.
+      This spreads items out a bit, so stacks don't end up exactly on top of each other,
+      making it obvious there are multiple items instead of a single overlapped stack.
+        - If you want to specify a `randomOffset` value without specifying a `floorYRot` value,
+          you can just add a decimal point (`1` becomes `1.0`, `1.5` doesn't change)
+- `flags`: Flags specify special behaviour for this specific position.
+  The flags are specified as a string of uppercase letters. The following values are accepted:
+    - `A`: Item is not automatically sorted, only being moved when the `/sort` command is used.
+    - `C`: Item is not moved if it is on the cruiser, unless `-a` or `-A` options are used (convenient for keeping tools
+      on the cruiser).
+    - `N`: Item is not sorted at all, unless `-A` option is used.
+    - `X`: Item is placed at the exact position specified, without raycasting below.
 
 ### Using the `/put` command
 
@@ -85,8 +80,8 @@ Examples:
 
 ### For modded/other items
 
-The `customItemPositions` config value contains a list of other item positions by name.
-This can be used to sort mod items, or items from future updates.
+The `customItemPositions` config value contains a list of other item positions by name. This can be used to sort mod
+items, or items from future updates.
 
 Format: `itemname:position;itemname:position`
 
@@ -94,9 +89,8 @@ For example: `MyScrapItem:0,3,-5.25,0;MyToolItem:cupboard:-1.7,0.5,3.2:C;MyUnsor
 
 ### Raycasting
 
-By default, all positions will trace a line downwards to find the closest spot on the ground (or any ship objects), and
-the items will be put there.
-That way, no items will be floating mid-air.
+By default, all positions will trace a line downwards to find the closest spot on the ground (or any ship objects),
+and the items will be put there. That way, no items will be floating mid-air.
 
 However, if you prefer your items to be at the exact position you specified, you can disable this with the `X` flag.
 
@@ -107,10 +101,6 @@ add an interval between moving items.
 
 Setting this to 250ms means, that only about 4 items will be sorted per second.
 This makes the sorting process slower, but adds the satisfying visual effect.
-
-### Random offset
-
-The `RandomOffset` config entry specifies the maximum distance an item can be moved randomly from its configured position when being placed. This spreads items out a bit so stacks don't end up exactly on top of each other, making it obvious there are multiple items instead of a single overlapped stack.
 
 ## Autosorting
 
