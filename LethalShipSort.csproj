@@ -4,7 +4,7 @@
     <AssemblyName>baer1.ShipSort</AssemblyName>
     <Product>LethalShipSort</Product>
     <!-- Change to whatever version you're currently on. -->
-    <Version>3.4.1</Version>
+    <Version>3.4.2</Version>
   </PropertyGroup>
   <!-- Project Properties -->
   <PropertyGroup>
