@@ -11,7 +11,7 @@ public struct ItemPosition
     public ItemPosition(string s)
     {
         var match = new Regex(
-            @"(?:([\w/\\]+):)?(?:([\d-.]+),){2}([\d-.]+)(?:,([\d-.]+))?(?::([A-Z]+))?$",
+            @"(?:([\w/\\]+):)?(?:([\d-.]+),){2}([\d-.]+)(?:,([\d-]+))?(?:,([\d-.]+))?(?::([A-Z]+))?$",
             RegexOptions.Multiline
         ).Match(s);
         if (!match.Success)
@@ -53,7 +53,25 @@ public struct ItemPosition
         else
             log.Append($"\n   rotation not specified");
 
-        flags = new Flags(match.Groups[5].Value);
+        var offsetstr = match.Groups[5].Value;
+        if (match.Groups[5].Success)
+        {
+            if (
+                !float.TryParse(
+                    offsetstr,
+                    NumberStyles.Float,
+                    CultureInfo.InvariantCulture,
+                    out var offset
+                )
+            )
+                throw new ArgumentException($"Invalid float ({s}) \"{offsetstr}\"");
+            randomOffset = offset;
+            log.Append($"\n   random offset is {randomOffset}");
+        }
+        else
+            log.Append($"\n   random offset not specified");
+
+        flags = new Flags(match.Groups[6].Value);
         log.Append($"\n   flags are {flags}");
 
         if (match.Groups[1].Success)
@@ -227,5 +245,6 @@ public struct ItemPosition
     public Vector3? position;
     public GameObject? parentTo;
     public int? floorYRot;
+    public float? randomOffset;
     public Flags flags;
 }

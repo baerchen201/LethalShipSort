@@ -23,6 +23,7 @@ public static class Utils
                 position.position.Value,
                 position.parentTo,
                 position.floorYRot ?? -1,
+                position.randomOffset,
                 position.flags
             )
         : MoveItemRelativeTo(
@@ -30,6 +31,7 @@ public static class Utils
             position.position.Value,
             position.parentTo,
             position.floorYRot ?? -1,
+            position.randomOffset,
             position.flags
         );
 
@@ -38,6 +40,7 @@ public static class Utils
         Vector3 position,
         GameObject? relativeTo,
         int floorYRot,
+        float? randomOffset,
         ItemPosition.Flags flags
     )
     {
@@ -69,7 +72,7 @@ public static class Utils
                     ship.transform.InverseTransformPoint(
                         hitInfo.point + item.itemProperties.verticalOffset * Vector3.up
                     ),
-                    LethalShipSort.Instance.RandomOffsetValue
+                    randomOffset
                 );
             else
             {
@@ -79,7 +82,7 @@ public static class Utils
         else
             position = Randomize(
                 position + item.itemProperties.verticalOffset * Vector3.up,
-                LethalShipSort.Instance.RandomOffsetValue
+                randomOffset
             );
 
         GameNetworkManager.Instance.localPlayerController.SetObjectAsNoLongerHeld(
@@ -104,6 +107,7 @@ public static class Utils
         Vector3 position,
         GameObject parentTo,
         int floorYRot,
+        float? randomOffset,
         ItemPosition.Flags flags
     )
     {
@@ -126,7 +130,7 @@ public static class Utils
                         hitInfo.point
                             + item.itemProperties.verticalOffset * Vector3.up
                             - new Vector3(0f, 0.05f, 0f),
-                        LethalShipSort.Instance.RandomOffsetValue
+                        randomOffset
                     )
                 );
             else
@@ -139,7 +143,7 @@ public static class Utils
                 position
                     + item.itemProperties.verticalOffset * Vector3.up
                     - new Vector3(0f, 0.05f, 0f),
-                LethalShipSort.Instance.RandomOffsetValue
+                randomOffset
             );
 
         GameNetworkManager.Instance.localPlayerController.SetObjectAsNoLongerHeld(
@@ -171,15 +175,17 @@ public static class Utils
         return true;
     }
 
-    public static Vector3 Randomize(Vector3 position, float maxDistance = 0.05f)
+    public static Vector3 Randomize(Vector3 position, float? maxDistance = null)
     {
         if (maxDistance < 0)
-            throw new ArgumentException("Invalid maxDistance (must be positive)");
+            throw new ArgumentException("Invalid randomOffset (must be positive)");
+        else if (maxDistance == null || Mathf.Approximately(maxDistance.Value, 0f))
+            return position;
         Random rng = new();
         return new Vector3(
-            position.x + (float)rng.NextDouble() * maxDistance * 2 - maxDistance,
+            position.x + (float)rng.NextDouble() * maxDistance.Value * 2 - maxDistance.Value,
             position.y,
-            position.z + (float)rng.NextDouble() * maxDistance * 2 - maxDistance
+            position.z + (float)rng.NextDouble() * maxDistance.Value * 2 - maxDistance.Value
         );
     }
 

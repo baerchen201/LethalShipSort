@@ -36,13 +36,6 @@ public class LethalShipSort : BaseUnityPlugin
         set => sortDelay.Value = value;
     }
 
-    private ConfigEntry<float> randomOffset = null!;
-    public float RandomOffsetValue
-    {
-        get => randomOffset.Value;
-        set => randomOffset.Value = value;
-    }
-
     private ConfigEntry<string> defaultOneHand = null!;
     private ConfigEntry<string> defaultTwoHand = null!;
     private ConfigEntry<string> defaultTool = null!;
@@ -265,7 +258,7 @@ public class LethalShipSort : BaseUnityPlugin
         configVersion = Config.Bind(
             "General",
             "ConfigVersion",
-            2,
+            3,
             "The version of this config file"
         );
         autoSort = Config.Bind(
@@ -279,12 +272,6 @@ public class LethalShipSort : BaseUnityPlugin
             "SortDelay",
             (uint)0,
             "The amount of milliseconds to wait between moving items, mostly for the satisfying visual effect.\nYou can't pick anything up while sorting items."
-        );
-        randomOffset = Config.Bind(
-            "General",
-            "RandomOffset",
-            0.1f,
-            "The maximum random offset applied to item positions."
         );
 
         BindItemPositionConfigs();
@@ -319,19 +306,19 @@ public class LethalShipSort : BaseUnityPlugin
         defaultOneHand = Config.Bind(
             "Items",
             "DefaultOneHand",
-            "-2.25,3,-5.25",
+            "-2.25,3,-5.25,0.05",
             "Default position for one-handed items."
         );
         defaultTwoHand = Config.Bind(
             "Items",
             "DefaultTwoHand",
-            "-4.5,3,-5.25",
+            "-4.5,3,-5.25,0.05",
             "Default position for two-handed items."
         );
         defaultTool = Config.Bind(
             "Items",
             "DefaultTool",
-            $"cupboard:-2,0.6,{CUPBOARD_BOTTOM},0:{ItemPosition.Flags.KEEP_ON_CRUISER}{ItemPosition.Flags.PARENT}",
+            $"cupboard:-2,0.6,{CUPBOARD_BOTTOM},0,0.02:{ItemPosition.Flags.KEEP_ON_CRUISER}{ItemPosition.Flags.PARENT}",
             "Default position for tool items."
         );
 
