@@ -28,6 +28,7 @@ public class SetItemPositionCommand : Command
     public static bool SetItemPosition(string[] args, out string error)
     {
         error = "Invalid arguments";
+        Utils.objectCount.Clear();
         switch (args.Length)
         {
             case 2:

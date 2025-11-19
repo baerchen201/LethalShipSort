@@ -10,8 +10,16 @@ public struct ItemPosition
 {
     public ItemPosition(string s)
     {
+        const int PARENT = 1;
+        const int XY = 2;
+        const int Z = 3;
+        const int R = 4;
+        const int ROFFSET = 5;
+        const int OFFSET = 6;
+        const int FLAGS = 7;
+
         var match = new Regex(
-            @"(?:([\w/\\]+):)?(?:([\d-.]+),){2}([\d-.]+)(?:,([\d]+))?(?:,([\d.]+))?(?::([A-Z]+))?$",
+            @"(?:([\w/\\]+):)?(?:([\d-.]+),){2}([\d-.]+)(?:,([\d]+)([+-][\d]+)?)?(?:,([\d.]+))?(?::([A-Z]+))?$",
             RegexOptions.Multiline
         ).Match(s);
         if (!match.Success)
@@ -28,9 +36,9 @@ public struct ItemPosition
 
         StringBuilder log = new($">> ItemPosition init \"{s}\"");
 
-        var xstr = match.Groups[2].Captures[0].Value;
-        var ystr = match.Groups[2].Captures[1].Value;
-        var zstr = match.Groups[3].Value;
+        var xstr = match.Groups[XY].Captures[0].Value;
+        var ystr = match.Groups[XY].Captures[1].Value;
+        var zstr = match.Groups[Z].Value;
         if (
             !float.TryParse(xstr, NumberStyles.Float, CultureInfo.InvariantCulture, out var x)
             || !float.TryParse(ystr, NumberStyles.Float, CultureInfo.InvariantCulture, out var y)
@@ -42,8 +50,8 @@ public struct ItemPosition
         position = new Vector3(x, y, z);
         log.Append($"\n   position is {position}");
 
-        var rstr = match.Groups[4].Value;
-        if (match.Groups[4].Success)
+        var rstr = match.Groups[R].Value;
+        if (match.Groups[R].Success)
         {
             if (!int.TryParse(rstr, NumberStyles.Integer, CultureInfo.InvariantCulture, out var r))
                 throw new ArgumentException($"Invalid integer ({s}) \"{rstr}\"");
@@ -51,10 +59,28 @@ public struct ItemPosition
             log.Append($"\n   rotation is {floorYRot}");
         }
         else
-            log.Append($"\n   rotation not specified");
+            log.Append("\n   rotation not specified");
 
-        var offsetstr = match.Groups[5].Value;
-        if (match.Groups[5].Success)
+        var roffsetstr = match.Groups[ROFFSET].Value;
+        if (match.Groups[ROFFSET].Success)
+        {
+            if (
+                !int.TryParse(
+                    roffsetstr,
+                    NumberStyles.Integer,
+                    CultureInfo.InvariantCulture,
+                    out var roffset
+                )
+            )
+                throw new ArgumentException($"Invalid integer ({s}) \"{roffsetstr}\"");
+            rotationOffset = roffset == 0 ? null : roffset;
+            log.Append($"\n   rotation offset is {roffset}");
+        }
+        else
+            log.Append("\n   rotation offset not specified");
+
+        var offsetstr = match.Groups[OFFSET].Value;
+        if (match.Groups[OFFSET].Success)
         {
             if (
                 !float.TryParse(
@@ -69,13 +95,14 @@ public struct ItemPosition
             log.Append($"\n   random offset is {randomOffset}");
         }
         else
-            log.Append($"\n   random offset not specified");
+            log.Append("\n   random offset not specified");
 
-        flags = new Flags(match.Groups[6].Value);
+        flags = new Flags(match.Groups[FLAGS].Value);
         log.Append($"\n   flags are {flags}");
 
-        if (match.Groups[1].Success)
-            switch (match.Groups[1].Value.ToLower().Trim('/', '\\'))
+        var parentstr = match.Groups[PARENT].Value;
+        if (match.Groups[PARENT].Success)
+            switch (parentstr.ToLower().Trim('/', '\\'))
             {
                 case "cupboard":
                 case "closet":
@@ -110,11 +137,11 @@ public struct ItemPosition
                     log.Append("\n   parent object is none (environment)");
                     parentTo = GameObject.Find("Environment");
                     if (parentTo == null)
-                        throw new Exception("Environment not found, what the actual fuck");
+                        throw new Exception("Environment not found");
                     break;
                 default:
-                    log.Append($"\n   parent object is custom ({match.Groups[1].Value}) ");
-                    parentTo = GameObject.Find(match.Groups[1].Value);
+                    log.Append($"\n   parent object is custom ({parentstr}) ");
+                    parentTo = GameObject.Find(parentstr);
                     if (parentTo == null)
                         throw new ArgumentException("Invalid parent object");
                     log.Append(parentTo.ToString());
@@ -158,8 +185,20 @@ public struct ItemPosition
             )
             + (
                 floorYRot == null
-                    ? string.Empty
+                    ? randomOffset == null
+                        ? ",0"
+                        : string.Empty
                     : string.Format(CultureInfo.InvariantCulture, ",{0}", floorYRot)
+            )
+            + (
+                rotationOffset == null
+                    ? string.Empty
+                    : string.Format(
+                        CultureInfo.InvariantCulture,
+                        "{0}{1}",
+                        rotationOffset < 0 ? "-" : "+",
+                        Math.Abs(rotationOffset.Value)
+                    )
             )
             + (flags.ToString().Length > 0 ? ':' : string.Empty)
             + flags;
@@ -245,6 +284,7 @@ public struct ItemPosition
     public Vector3? position;
     public GameObject? parentTo;
     public int? floorYRot;
+    public int? rotationOffset;
     public float? randomOffset;
     public Flags flags;
 }

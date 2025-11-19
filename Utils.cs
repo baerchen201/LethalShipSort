@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 using Random = System.Random;
@@ -13,27 +14,45 @@ public static class Utils
         name.EndsWith(CLONE) ? name[..^CLONE.Length] : name;
 
     public static bool MoveItem(GrabbableObject item, ItemPosition position) =>
-        position.position == null
-            ? throw new ArgumentNullException(
-                $"{nameof(ItemPosition)}.{nameof(ItemPosition.position)} can not be null"
-            )
-        : position.flags.Parent && position.parentTo != null
-            ? MoveItem(
+        (
+            position.position == null
+                ? throw new ArgumentNullException(
+                    $"{nameof(ItemPosition)}.{nameof(ItemPosition.position)} can not be null"
+                )
+            : position.flags.Parent && position.parentTo != null
+                ? MoveItem(
+                    item,
+                    position.position.Value,
+                    position.parentTo,
+                    (position.floorYRot ?? -1)
+                        + (position.rotationOffset ?? 0)
+                            * objectCount.GetValueOrDefault(RemoveClone(item.name))
+                            % 360,
+                    position.randomOffset,
+                    position.flags
+                )
+            : MoveItemRelativeTo(
                 item,
                 position.position.Value,
                 position.parentTo,
-                position.floorYRot ?? -1,
+                (position.floorYRot ?? -1)
+                    + (position.rotationOffset ?? 0)
+                        * objectCount.GetValueOrDefault(RemoveClone(item.name)),
                 position.randomOffset,
                 position.flags
             )
-        : MoveItemRelativeTo(
-            item,
-            position.position.Value,
-            position.parentTo,
-            position.floorYRot ?? -1,
-            position.randomOffset,
-            position.flags
-        );
+        ) && IncreaseItemCount(item);
+
+    internal static readonly Dictionary<string, int> objectCount = [];
+
+    public static IReadOnlyDictionary<string, int> ObjectCount => objectCount;
+
+    private static bool IncreaseItemCount(GrabbableObject item)
+    {
+        objectCount[RemoveClone(item.name)] =
+            objectCount.GetValueOrDefault(RemoveClone(item.name)) + 1;
+        return true;
+    }
 
     public static bool MoveItemRelativeTo(
         GrabbableObject item,
@@ -44,7 +63,7 @@ public static class Utils
         ItemPosition.Flags flags
     )
     {
-        LethalShipSort.Logger.LogDebug(
+        LethalShipSort.Logger.LogInfo(
             $">> Moving item {RemoveClone(item.name)} to position {position} relative to {(relativeTo == null ? "ship" : RemoveClone(relativeTo.name))}"
         );
 
@@ -111,9 +130,10 @@ public static class Utils
         ItemPosition.Flags flags
     )
     {
-        LethalShipSort.Logger.LogDebug(
+        LethalShipSort.Logger.LogInfo(
             $">> Moving item {RemoveClone(item.name)} to position {position} in {RemoveClone(parentTo.name)}"
         );
+
         if (!flags.Exact)
             if (
                 Physics.Raycast(
