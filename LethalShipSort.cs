@@ -258,7 +258,7 @@ public class LethalShipSort : BaseUnityPlugin
         configVersion = Config.Bind(
             "General",
             "ConfigVersion",
-            3,
+            4,
             "The version of this config file"
         );
         autoSort = Config.Bind(
