@@ -41,10 +41,11 @@ are required:
         - `none` or `environment` for the world root (`Environment`)
         - `ship` for the ship (`Environment/HangarShip`), but you can also just not specify a parent since this is the
           default (`ship:0,0,0` is equivalent to `0,0,0`)
-- coordinates `x,y,z[,floorYRot][,randomOffset]`:
+- coordinates `x,y,z[,floorYRot[+-rotationOffset]][,randomOffset]`:
     - `x,y,z`: the coordinates where to place the object relative to `parent`
     - `floorYRot`: an optional Y rotation value, if unspecified rotation is not changed.
       This has to be a positive integer (whole number)
+        - `rotationOffset`: an optional rotational offset applied to each item, separated from `floorYRot` by its sign.
     - `randomOffset`: an optional value which specifies the maximum distance an item can be moved randomly from its
       configured position when being placed.
       This spreads items out a bit, so stacks don't end up exactly on top of each other,
