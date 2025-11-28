@@ -222,42 +222,5 @@ public static class Utils
         return path;
     }
 
-    internal const int LAYER_MASK = (int)(Layers.Room | Layers.Colliders | Layers.Railing);
-
-    [Flags]
-    [SuppressMessage("ReSharper", "UnusedMember.Global")]
-    private enum Layers
-    {
-        Default = 1,
-        TransparentFX = 2,
-        IgnoreRaycast = 4,
-        Player = 8,
-        Water = 16,
-        UI = 32,
-        Props = 64,
-        HelmetVisor = 128,
-        Room = 256,
-        InteractableObject = 512,
-        Foliage = 1024,
-        Colliders = 2048,
-        PhysicsObject = 4096,
-        Triggers = 8192,
-        MapRadar = 16384,
-        NavigationSurface = 32768,
-        MoldSpore = 65536,
-        Anomaly = 131072,
-        LineOfSight = 262144,
-        Enemies = 524288,
-        PlayerRagdoll = 1048576,
-        MapHazards = 2097152,
-        ScanNode = 4194304,
-        EnemiesNotRendered = 8388608,
-        MiscLevelGeometry = 16777216,
-        Terrain = 33554432,
-        PlaceableShipObjects = 67108864,
-        PlacementBlocker = 134217728,
-        Railing = 268435456,
-        DecalStickableSurface = 536870912,
-        Vehicle = 1073741824,
-    }
+    internal const int LAYER_MASK = 268437761; // Copied this straight from GrabbableObject.GetItemFloorPosition
 }
