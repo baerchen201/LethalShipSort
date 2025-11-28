@@ -357,7 +357,12 @@ public class LethalShipSort : BaseUnityPlugin
         ItemPositionConfig("RedLocustHive", "Bee hive", new Vector3(-6.8f, 4.4f, -5.65f));
         ItemPositionConfig("DiyFlashbang", "Homemade Flashbang");
         ItemPositionConfig("PickleJar", "Jar of pickles");
-        ItemPositionConfig("KnifeItem", "Kitchen knife", defaultKeepOnCruiser: true);
+        ItemPositionConfig(
+            "KnifeItem",
+            "Kitchen knife",
+            new Vector3(1.9f, 0.6f, CUPBOARD_MIDDLE_2),
+            defaultKeepOnCruiser: true
+        );
         ItemPositionConfig("SeveredThighLOD0", "Knee");
         ItemPositionConfig("Cog", "Large axle");
         ItemPositionConfig("LaserPointer", "Laser pointer");
