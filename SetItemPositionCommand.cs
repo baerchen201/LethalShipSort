@@ -90,8 +90,13 @@ public class SetItemPositionCommand : Command
         if (!LethalShipSort.Instance.vanillaItems.TryGetValue(name.ToLower(), out var internalName))
             if (LethalShipSort.Instance.vanillaItems.ContainsValue(name.ToLower()))
                 internalName = name;
-            else
-                return false;
+            else if (
+                !LethalShipSort.Instance.modItems.TryGetValue(name.ToLower(), out internalName)
+            )
+                if (LethalShipSort.Instance.modItems.ContainsValue(name.ToLower()))
+                    internalName = name;
+                else
+                    return false;
         LethalShipSort.Logger.LogDebug($"internalName: {internalName} ({name})");
 
         ConfigEntry<string>? config = null;
@@ -102,12 +107,36 @@ public class SetItemPositionCommand : Command
                     !string.Equals(kvp.Key, internalName, StringComparison.CurrentCultureIgnoreCase)
                 )
             )
-                return false;
-            config = LethalShipSort
-                .Instance.itemPositions.First(kvp =>
-                    string.Equals(kvp.Key, internalName, StringComparison.CurrentCultureIgnoreCase)
+                if (
+                    LethalShipSort.Instance.modItemPositions.All(kvp =>
+                        !string.Equals(
+                            kvp.Key,
+                            internalName,
+                            StringComparison.CurrentCultureIgnoreCase
+                        )
+                    )
                 )
-                .Value;
+                    return false;
+                else
+                    config = LethalShipSort
+                        .Instance.modItemPositions.First(kvp =>
+                            string.Equals(
+                                kvp.Key,
+                                internalName,
+                                StringComparison.CurrentCultureIgnoreCase
+                            )
+                        )
+                        .Value;
+            else
+                config = LethalShipSort
+                    .Instance.itemPositions.First(kvp =>
+                        string.Equals(
+                            kvp.Key,
+                            internalName,
+                            StringComparison.CurrentCultureIgnoreCase
+                        )
+                    )
+                    .Value;
         }
 
         error = "Error getting position";

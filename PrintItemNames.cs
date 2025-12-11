@@ -9,7 +9,8 @@ namespace LethalShipSort;
 public class PrintItemNames : Command
 {
     public override string[] Commands => ["itemnames", Name];
-    public override string Description => "Lists all currently loaded item names";
+    public override string Description =>
+        "Lists all currently loaded item names which do not have assigned sorting positions";
     public override string[] Syntax => ["", "[ -a | --all ]"];
 
     public override bool Invoke(string[] args, Dictionary<string, string> kwargs, out string? error)
@@ -25,7 +26,13 @@ public class PrintItemNames : Command
         foreach (var item in Object.FindObjectsOfType<GrabbableObject>())
         {
             var name = Utils.RemoveClone(item.name);
-            if (all || !LethalShipSort.Instance.vanillaItems.ContainsValue(name.ToLower()))
+            if (
+                all
+                || (
+                    !LethalShipSort.Instance.vanillaItems.ContainsValue(name.ToLower())
+                    && !LethalShipSort.Instance.modItems.ContainsValue(name.ToLower())
+                )
+            )
                 list.TryAdd(name, item.itemProperties?.itemName);
         }
 

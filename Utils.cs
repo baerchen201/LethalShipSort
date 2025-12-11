@@ -66,7 +66,17 @@ public static class Utils
     /// </summary>
     /// <param name="item">The item to get a key for</param>
     /// <returns>A unique string representation of the item type</returns>
-    public static string ItemKey(GrabbableObject item) => RemoveClone(item.name);
+    /// <seealso cref="LethalShipSort.modItemPositionsList"/>
+    /// <seealso cref="LethalShipSort.ItemPositionConfig(BepInEx.Configuration.ConfigFile, string, string, bool, bool?, string?)"/>
+    /// <seealso cref="LethalShipSort.ItemPositionConfig(BepInEx.Configuration.ConfigFile, string, bool, bool?, string?)"/>
+    /// <seealso cref="LethalShipSort.ItemPositionConfig(BepInEx.Configuration.ConfigFile, string, string, Vector3, bool, bool?, bool?, int?, string?)"/>
+    /// <seealso cref="LethalShipSort.ItemPositionConfig(BepInEx.Configuration.ConfigFile, string, Vector3, bool, bool?, bool?, int?, string?)"/>
+    public static string ItemKey(GrabbableObject item)
+    {
+        if (item is ShotgunItem { shellsLoaded: > 0 } shotgunItem)
+            return $"{nameof(ShotgunItem)}-{Math.Min(shotgunItem.shellsLoaded, 2)}";
+        return RemoveClone(item.name);
+    }
 
     public static bool MoveItemRelativeTo(
         GrabbableObject item,
