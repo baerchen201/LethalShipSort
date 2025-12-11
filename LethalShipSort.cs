@@ -140,8 +140,9 @@ public class LethalShipSort : BaseUnityPlugin
             {
                 try
                 {
-                    positions[kvp.Key] =
-                        kvp.Value.Value == "" ? null : new ItemPosition(kvp.Value.Value);
+                    positions[kvp.Key] = string.IsNullOrWhiteSpace(kvp.Value.Value)
+                        ? null
+                        : new ItemPosition(kvp.Value.Value);
                 }
                 catch (ArgumentException)
                 {
@@ -160,7 +161,7 @@ public class LethalShipSort : BaseUnityPlugin
 
     public ItemPosition GetPosition(GrabbableObject item)
     {
-        var itemName = Utils.RemoveClone(item.name);
+        var itemName = Utils.ItemKey(item);
         ItemPosition? itemPosition = null;
 
         Logger.LogDebug(
@@ -258,7 +259,7 @@ public class LethalShipSort : BaseUnityPlugin
         configVersion = Config.Bind(
             "General",
             "ConfigVersion",
-            4,
+            5,
             "The version of this config file"
         );
         autoSort = Config.Bind(
@@ -360,8 +361,10 @@ public class LethalShipSort : BaseUnityPlugin
         ItemPositionConfig(
             "KnifeItem",
             "Kitchen knife",
-            new Vector3(1.9f, 0.6f, CUPBOARD_MIDDLE_2),
-            defaultKeepOnCruiser: true
+            new Vector3(-1.9f, 0.6f, CUPBOARD_MIDDLE_2),
+            defaultInCupboard: true,
+            defaultKeepOnCruiser: true,
+            defaultFloorYRot: 0
         );
         ItemPositionConfig("SeveredThighLOD0", "Knee");
         ItemPositionConfig("Cog", "Large axle");

@@ -11,15 +11,19 @@ public struct ItemPosition
     public ItemPosition(string s)
     {
         const int PARENT = 1;
-        const int XY = 2;
-        const int Z = 3;
-        const int R = 4;
-        const int ROFFSET = 5;
-        const int OFFSET = 6;
-        const int FLAGS = 7;
+        const int X = 2;
+        const int XOFFSET = 3;
+        const int Y = 4;
+        const int YOFFSET = 5;
+        const int Z = 6;
+        const int ZOFFSET = 7;
+        const int R = 8;
+        const int ROFFSET = 9;
+        const int OFFSET = 10;
+        const int FLAGS = 11;
 
         var match = new Regex(
-            @"(?:([\w/\\]+):)?(?:([\d-.]+),){2}([\d-.]+)(?:,([\d]+)([+-][\d]+)?)?(?:,([\d.]+))?(?::([A-Z]+))?$",
+            @"(?:([\w/\\]+):)?(?:(-?\d+(?:\.\d+)?)([+-]\d+(?:\.\d+)?)?,)(?:(-?\d+(?:\.\d+)?)([+-]\d+(?:\.\d+)?)?,)(-?\d+(?:\.\d+)?)([+-]\d+(?:\.\d+)?)?(?:,(\d+)([+-]\d+)?)?(?:,(\d+(?:\.\d+)?))?(?::([A-Z]+))?$",
             RegexOptions.Multiline
         ).Match(s);
         if (!match.Success)
@@ -36,25 +40,73 @@ public struct ItemPosition
 
         StringBuilder log = new($">> ItemPosition init \"{s}\"");
 
-        var xstr = match.Groups[XY].Captures[0].Value;
-        var ystr = match.Groups[XY].Captures[1].Value;
+        var xstr = match.Groups[X].Value;
+        var ystr = match.Groups[Y].Value;
         var zstr = match.Groups[Z].Value;
-        if (
-            !float.TryParse(xstr, NumberStyles.Float, CultureInfo.InvariantCulture, out var x)
-            || !float.TryParse(ystr, NumberStyles.Float, CultureInfo.InvariantCulture, out var y)
-            || !float.TryParse(zstr, NumberStyles.Float, CultureInfo.InvariantCulture, out var z)
-        )
-            throw new ArgumentException(
-                $"Invalid float ({s}) [\"{xstr}\", \"{ystr}\", \"{zstr}\"]"
-            );
+        if (!float.TryParse(xstr, NumberStyles.Float, CultureInfo.InvariantCulture, out var x))
+            throw new ArgumentException($"Invalid {nameof(x)} value ({xstr})");
+        if (!float.TryParse(ystr, NumberStyles.Float, CultureInfo.InvariantCulture, out var y))
+            throw new ArgumentException($"Invalid {nameof(y)} value ({ystr})");
+        if (!float.TryParse(zstr, NumberStyles.Float, CultureInfo.InvariantCulture, out var z))
+            throw new ArgumentException($"Invalid {nameof(z)} value ({zstr})");
         position = new Vector3(x, y, z);
         log.Append($"\n   position is {position}");
+
+        var xoffsetstr = match.Groups[XOFFSET].Value;
+        var yoffsetstr = match.Groups[YOFFSET].Value;
+        var zoffsetstr = match.Groups[ZOFFSET].Value;
+        float? xoffset = null,
+            yoffset = null,
+            zoffset = null;
+        if (match.Groups[XOFFSET].Success)
+            if (
+                !float.TryParse(
+                    xoffsetstr,
+                    NumberStyles.Float,
+                    CultureInfo.InvariantCulture,
+                    out var _xoffset
+                )
+            )
+                throw new ArgumentException($"Invalid {nameof(xoffset)} value ({xoffsetstr})");
+            else
+                xoffset = _xoffset;
+        if (match.Groups[YOFFSET].Success)
+            if (
+                !float.TryParse(
+                    yoffsetstr,
+                    NumberStyles.Float,
+                    CultureInfo.InvariantCulture,
+                    out var _yoffset
+                )
+            )
+                throw new ArgumentException($"Invalid {nameof(yoffset)} value ({ystr})");
+            else
+                yoffset = _yoffset;
+        if (match.Groups[ZOFFSET].Success)
+            if (
+                !float.TryParse(
+                    zoffsetstr,
+                    NumberStyles.Float,
+                    CultureInfo.InvariantCulture,
+                    out var _zoffset
+                )
+            )
+                throw new ArgumentException($"Invalid {nameof(zoffset)} value ({zstr})");
+            else
+                zoffset = _zoffset;
+        if (xoffset != null || yoffset != null || zoffset != null)
+        {
+            positionOffset = new Vector3(xoffset ?? 0f, yoffset ?? 0f, zoffset ?? 0f);
+            log.Append($"\n   fixed positional offset is {positionOffset}");
+        }
+        else
+            log.Append($"\n   fixed positional offset is not specified");
 
         var rstr = match.Groups[R].Value;
         if (match.Groups[R].Success)
         {
             if (!int.TryParse(rstr, NumberStyles.Integer, CultureInfo.InvariantCulture, out var r))
-                throw new ArgumentException($"Invalid integer ({s}) \"{rstr}\"");
+                throw new ArgumentException($"Invalid {nameof(floorYRot)} value ({rstr})");
             floorYRot = r;
             log.Append($"\n   rotation is {floorYRot}");
         }
@@ -72,12 +124,12 @@ public struct ItemPosition
                     out var roffset
                 )
             )
-                throw new ArgumentException($"Invalid integer ({s}) \"{roffsetstr}\"");
+                throw new ArgumentException($"Invalid {nameof(roffset)} value ({roffsetstr})");
             rotationOffset = roffset == 0 ? null : roffset;
-            log.Append($"\n   rotation offset is {roffset}");
+            log.Append($"\n   rotational offset is {roffset}");
         }
         else
-            log.Append("\n   rotation offset not specified");
+            log.Append("\n   rotational offset not specified");
 
         var offsetstr = match.Groups[OFFSET].Value;
         if (match.Groups[OFFSET].Success)
@@ -90,12 +142,12 @@ public struct ItemPosition
                     out var offset
                 )
             )
-                throw new ArgumentException($"Invalid float ({s}) \"{offsetstr}\"");
+                throw new ArgumentException($"Invalid {nameof(randomOffset)} value ({offsetstr})");
             randomOffset = offset;
-            log.Append($"\n   random offset is {randomOffset}");
+            log.Append($"\n   random positional offset is {randomOffset}");
         }
         else
-            log.Append("\n   random offset not specified");
+            log.Append("\n   random positional offset not specified");
 
         flags = new Flags(match.Groups[FLAGS].Value);
         log.Append($"\n   flags are {flags}");
@@ -282,6 +334,7 @@ public struct ItemPosition
     }
 
     public Vector3? position;
+    public Vector3? positionOffset;
     public GameObject? parentTo;
     public int? floorYRot;
     public int? rotationOffset;

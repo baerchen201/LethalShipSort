@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 using Random = System.Random;
 
@@ -13,35 +12,40 @@ public static class Utils
     public static string RemoveClone(string name) =>
         name.EndsWith(CLONE) ? name[..^CLONE.Length] : name;
 
-    public static bool MoveItem(GrabbableObject item, ItemPosition position) =>
-        (
-            position.position == null
-                ? throw new ArgumentNullException(
-                    $"{nameof(ItemPosition)}.{nameof(ItemPosition.position)} can not be null"
-                )
-            : position.flags.Parent && position.parentTo != null
-                ? MoveItem(
-                    item,
-                    position.position.Value,
-                    position.parentTo,
-                    (position.floorYRot ?? -1)
-                        + (position.rotationOffset ?? 0)
-                            * objectCount.GetValueOrDefault(RemoveClone(item.name))
-                            % 360,
-                    position.randomOffset,
-                    position.flags
-                )
-            : MoveItemRelativeTo(
-                item,
-                position.position.Value,
-                position.parentTo,
-                (position.floorYRot ?? -1)
-                    + (position.rotationOffset ?? 0)
-                        * objectCount.GetValueOrDefault(RemoveClone(item.name)),
-                position.randomOffset,
-                position.flags
-            )
-        ) && IncreaseItemCount(item);
+    public static bool MoveItem(GrabbableObject item, ItemPosition position)
+    {
+        if (position.position == null)
+            throw new ArgumentNullException(
+                $"{nameof(ItemPosition)}.{nameof(ItemPosition.position)} can not be null"
+            );
+        var positionOffset =
+            position.positionOffset != null
+                ? position.positionOffset.Value * GetItemCount(item)
+                : Vector3.zero;
+        var floorYRot =
+            (position.floorYRot ?? -1) + (position.rotationOffset ?? 0) * GetItemCount(item) % 360;
+        return (
+                position.flags.Parent && position.parentTo != null
+                    ? MoveItem(
+                        item,
+                        position.position.Value,
+                        positionOffset,
+                        position.parentTo,
+                        floorYRot,
+                        position.randomOffset,
+                        position.flags
+                    )
+                    : MoveItemRelativeTo(
+                        item,
+                        position.position.Value,
+                        positionOffset,
+                        position.parentTo,
+                        floorYRot,
+                        position.randomOffset,
+                        position.flags
+                    )
+            ) && IncreaseItemCount(item);
+    }
 
     internal static readonly Dictionary<string, int> objectCount = [];
 
@@ -49,14 +53,25 @@ public static class Utils
 
     private static bool IncreaseItemCount(GrabbableObject item)
     {
-        objectCount[RemoveClone(item.name)] =
-            objectCount.GetValueOrDefault(RemoveClone(item.name)) + 1;
+        var key = ItemKey(item);
+        objectCount[key] = objectCount.GetValueOrDefault(key) + 1;
         return true;
     }
+
+    private static int GetItemCount(GrabbableObject item) =>
+        objectCount.GetValueOrDefault(ItemKey(item));
+
+    /// <summary>
+    /// You can patch this method to add sub-categories of items (like different amounts of bullets in a shotgun)
+    /// </summary>
+    /// <param name="item">The item to get a key for</param>
+    /// <returns>A unique string representation of the item type</returns>
+    public static string ItemKey(GrabbableObject item) => RemoveClone(item.name);
 
     public static bool MoveItemRelativeTo(
         GrabbableObject item,
         Vector3 position,
+        Vector3 positionOffset,
         GameObject? relativeTo,
         int floorYRot,
         float? randomOffset,
@@ -89,7 +104,9 @@ public static class Utils
             )
                 position = Randomize(
                     ship.transform.InverseTransformPoint(
-                        hitInfo.point + item.itemProperties.verticalOffset * Vector3.up
+                        hitInfo.point
+                            + item.itemProperties.verticalOffset * Vector3.up
+                            + positionOffset
                     ),
                     randomOffset
                 );
@@ -100,10 +117,11 @@ public static class Utils
             }
         else
             position = Randomize(
-                position + item.itemProperties.verticalOffset * Vector3.up,
+                position + item.itemProperties.verticalOffset * Vector3.up + positionOffset,
                 randomOffset
             );
 
+        LethalShipSort.Logger.LogDebug($"   true position: {position}");
         GameNetworkManager.Instance.localPlayerController.SetObjectAsNoLongerHeld(
             true,
             true,
@@ -124,6 +142,7 @@ public static class Utils
     public static bool MoveItem(
         GrabbableObject item,
         Vector3 position,
+        Vector3 positionOffset,
         GameObject parentTo,
         int floorYRot,
         float? randomOffset,
@@ -149,7 +168,8 @@ public static class Utils
                     Randomize(
                         hitInfo.point
                             + item.itemProperties.verticalOffset * Vector3.up
-                            - new Vector3(0f, 0.05f, 0f),
+                            - new Vector3(0f, 0.05f, 0f)
+                            + positionOffset,
                         randomOffset
                     )
                 );
@@ -162,10 +182,12 @@ public static class Utils
             position = Randomize(
                 position
                     + item.itemProperties.verticalOffset * Vector3.up
-                    - new Vector3(0f, 0.05f, 0f),
+                    - new Vector3(0f, 0.05f, 0f)
+                    + positionOffset,
                 randomOffset
             );
 
+        LethalShipSort.Logger.LogDebug($"   true position: {position}");
         GameNetworkManager.Instance.localPlayerController.SetObjectAsNoLongerHeld(
             true,
             true,
