@@ -49,7 +49,7 @@ public class SortItemsCommand : Command
     {
         error = "No items to sort";
         Utils.objectCount.Clear();
-        GameNetworkManager.Instance.localPlayerController.DropAllHeldItemsAndSync();
+        GameNetworkManager.Instance.localPlayerController.DropAllHeldItemsAndSyncNonexact();
         var items = Object.FindObjectsOfType<GrabbableObject>();
         if (items == null)
             return false;
@@ -126,7 +126,7 @@ public class SortItemsCommand : Command
         try
         {
             Utils.objectCount.Clear();
-            GameNetworkManager.Instance.localPlayerController.DropAllHeldItemsAndSync();
+            GameNetworkManager.Instance.localPlayerController.DropAllHeldItemsAndSyncNonexact();
             var items = Object.FindObjectsOfType<GrabbableObject>();
             if (items == null)
                 return;
