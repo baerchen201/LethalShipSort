@@ -330,7 +330,7 @@ public class LethalShipSort : BaseUnityPlugin
         configVersion = Config.Bind(
             "General",
             nameof(ConfigVersion),
-            5,
+            6,
             "The version of this config file"
         );
         autoSort = Config.Bind(
@@ -611,7 +611,7 @@ public class LethalShipSort : BaseUnityPlugin
         customItemPositions = Config.Bind(
             ITEMS,
             "CustomItemPositions",
-            "MyItem1:0,0,0;MyItem2:cupboard:1.5,-2,3",
+            "ClipboardManual:N;StickyNoteItem:N",
             "Semicolon-separated list of internal item names and their positions."
         );
     }
