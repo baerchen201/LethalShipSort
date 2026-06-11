@@ -1,8 +1,8 @@
-using ChatCommandAPI;
+using ChatCommandAPI.Old;
 
 namespace LethalShipSort;
 
-public class AutoSortToggle : ToggleCommand
+public class AutoSortToggle : LegacyToggleCommand
 {
     public override string Name => "AutoSort";
     public override string ToggleDescription =>

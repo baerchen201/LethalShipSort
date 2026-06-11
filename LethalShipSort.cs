@@ -4,6 +4,7 @@ using System.Globalization;
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
+using ChatCommandAPI.Utils;
 using HarmonyLib;
 using Unity.Netcode;
 using UnityEngine;
@@ -848,7 +849,7 @@ public class LethalShipSort : BaseUnityPlugin
         {
             if (Instance.ConfigVersion < Instance.CurrentConfigVersion)
             {
-                ChatCommandAPI.ChatCommandAPI.PrintWarning(
+                Chat.PrintWarning(
                     $"[{MyPluginInfo.PLUGIN_NAME}] Your configuration file is outdated.\n"
                         + $"Please verify your configuration file and update it accordingly.\n"
                         + $"<indent=10px>Expected: v{Instance.CurrentConfigVersion}\n"
@@ -860,7 +861,7 @@ public class LethalShipSort : BaseUnityPlugin
             }
             else if (Instance.ConfigVersion > Instance.CurrentConfigVersion)
             {
-                ChatCommandAPI.ChatCommandAPI.PrintWarning(
+                Chat.PrintWarning(
                     $"[{MyPluginInfo.PLUGIN_NAME}] Your configuration file is using a newer, unsupported format.\n"
                         + $"There have been changes to the configuration file format which could cause errors.\n"
                         + $"Please verify your configuration file and mod version.\n"

@@ -1,0 +1,12 @@
+on:
+  push:
+    tags:
+      - "*"
+name: "Build and upload release"
+concurrency:
+  group: "${{ github.repository }}-${{ github.workflow }}"
+jobs:
+  build:
+    uses: baerchen201/LethalModBuilder/.github/workflows/build.yml@main
+    permissions:
+      contents: write

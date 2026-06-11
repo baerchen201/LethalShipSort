@@ -3,13 +3,14 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using BepInEx.Configuration;
-using ChatCommandAPI;
+using ChatCommandAPI.Old;
+using ChatCommandAPI.Utils;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace LethalShipSort;
 
-public class SetItemPositionCommand : Command
+public class SetItemPositionCommand : LegacyCommand
 {
     public override string Name => "SetItemPosition";
     public override string Description => "Sets the position for an item when sorting";
@@ -19,7 +20,7 @@ public class SetItemPositionCommand : Command
             "\"<item>\" { here | there } [ once | game | always ]\nExample: /put \"easter egg\" there always",
         ];
 
-    public override bool Invoke(string[] args, Dictionary<string, string> kwargs, out string error)
+    public override bool Invoke(string[] args, out string error)
     {
         error = "The ship must be in orbit";
         return StartOfRound.Instance.inShipPhase && SetItemPosition(args, out error);
@@ -148,7 +149,7 @@ public class SetItemPositionCommand : Command
         switch (when)
         {
             case when.once:
-                ChatCommandAPI.ChatCommandAPI.Print(
+                Chat.Print(
                     $"Moving all items of type {internalName} to position {(relativeTo == null ? position : relativeTo.transform.InverseTransformPoint(position))}"
                 );
                 error = "No items to sort";
@@ -186,7 +187,7 @@ public class SetItemPositionCommand : Command
                         }
                     });
                     error = $"{itemsFailed} items couldn't be sorted";
-                    ChatCommandAPI.ChatCommandAPI.Print("Finished sorting items");
+                    Chat.Print("Finished sorting items");
                     return itemsFailed == 0;
                 }
                 else
@@ -212,7 +213,7 @@ public class SetItemPositionCommand : Command
                     position,
                     relativeTo
                 );
-                ChatCommandAPI.ChatCommandAPI.Print(
+                Chat.Print(
                     $"Items of type {internalName} will be put on position {(relativeTo == null ? position : relativeTo.transform.InverseTransformPoint(position))} for this game"
                 );
                 goto sort;
@@ -221,7 +222,7 @@ public class SetItemPositionCommand : Command
                     relativeTo == null
                         ? $"none:{position.x},{position.y},{position.z}"
                         : $"{Utils.GameObjectPath(relativeTo)}:{position.x},{position.y},{position.z}";
-                ChatCommandAPI.ChatCommandAPI.Print(
+                Chat.Print(
                     $"Items of type {internalName} will be put on position {(relativeTo == null ? position : relativeTo.transform.InverseTransformPoint(position))}"
                 );
                 sort:
@@ -318,11 +319,9 @@ public class SetItemPositionCommand : Command
         var error = $"{itemsFailed} items couldn't be sorted";
 
         if (itemsFailed != 0)
-            ChatCommandAPI.ChatCommandAPI.PrintError(
-                $"{errorPrefix}: <noparse>" + error + "</noparse>"
-            );
+            Chat.PrintError($"{errorPrefix}: <noparse>" + error + "</noparse>");
         else
-            ChatCommandAPI.ChatCommandAPI.Print("Finished sorting items");
+            Chat.Print("Finished sorting items");
     }
 
     private static bool GetPosition(where where, out Vector3 position, out GameObject? relativeTo)

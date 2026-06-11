@@ -1,19 +1,20 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using ChatCommandAPI;
+using ChatCommandAPI.Old;
+using ChatCommandAPI.Utils;
 using Object = UnityEngine.Object;
 
 namespace LethalShipSort;
 
-public class PrintItemNames : Command
+public class PrintItemNames : LegacyCommand
 {
     public override string[] Commands => ["itemnames", Name];
     public override string Description =>
         "Lists all currently loaded item names which do not have assigned sorting positions";
-    public override string[] Syntax => ["", "[ -a | --all ]"];
+    public override string[] Syntax => ["[ -a | --all ]"];
 
-    public override bool Invoke(string[] args, Dictionary<string, string> kwargs, out string? error)
+    public override bool Invoke(string[] args, out string error)
     {
         error = "The ship must be in orbit";
         if (!StartOfRound.Instance.inShipPhase)
@@ -21,7 +22,7 @@ public class PrintItemNames : Command
 
         var all = args.Contains("-a") || args.Contains("--all");
 
-        error = "No items on the ship";
+        error = "No unknown items on the ship";
         Dictionary<string, string?> list = [];
         foreach (var item in Object.FindObjectsOfType<GrabbableObject>())
         {
@@ -45,7 +46,7 @@ public class PrintItemNames : Command
                 .OrderBy(i => i, StringComparer.CurrentCultureIgnoreCase)
         );
         var m = $"The following{(all ? "" : " unknown")} items are currently on the ship:\n";
-        ChatCommandAPI.ChatCommandAPI.Print($"{m}<indent=10px>{l}</indent>");
+        Chat.Print($"{m}<indent=10px>{l}</indent>");
         LethalShipSort.Logger.LogInfo(m + l);
         return true;
     }

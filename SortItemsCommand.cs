@@ -2,14 +2,15 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using ChatCommandAPI;
+using ChatCommandAPI.Old;
+using ChatCommandAPI.Utils;
 using HarmonyLib;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace LethalShipSort;
 
-public class SortItemsCommand : Command
+public class SortItemsCommand : LegacyCommand
 {
     public override string Name => "SortItems";
     public override string[] Commands => ["sort", "ShipSort", Name];
@@ -18,7 +19,7 @@ public class SortItemsCommand : Command
     public override string[] Syntax =>
         ["", "[ -a | -A ]", "<item> { here | there } [ once | game | always ]"];
 
-    public override bool Invoke(string[] args, Dictionary<string, string> kwargs, out string error)
+    public override bool Invoke(string[] args, out string error)
     {
         error = "The ship must be in orbit";
         return StartOfRound.Instance.inShipPhase
@@ -59,7 +60,7 @@ public class SortItemsCommand : Command
         if (items.Length == 0)
             return false;
 
-        ChatCommandAPI.ChatCommandAPI.Print("Sorting all items...");
+        Chat.Print("Sorting all items...");
 
         var cars = Object.FindObjectsOfType<VehicleController>() ?? [];
 
@@ -90,7 +91,7 @@ public class SortItemsCommand : Command
 
             if (scrapFailed != 0 || toolsFailed != 0)
                 return false;
-            ChatCommandAPI.ChatCommandAPI.Print("Finished sorting items");
+            Chat.Print("Finished sorting items");
         }
         else
         {
@@ -136,7 +137,7 @@ public class SortItemsCommand : Command
             if (items.Length == 0)
                 return;
 
-            ChatCommandAPI.ChatCommandAPI.Print("Sorting all items...");
+            Chat.Print("Sorting all items...");
 
             var cars = Object.FindObjectsOfType<VehicleController>() ?? [];
 
@@ -161,11 +162,11 @@ public class SortItemsCommand : Command
                     toolsFailed = SortItems(tools);
 
                 if (scrapFailed != 0 || toolsFailed != 0)
-                    ChatCommandAPI.ChatCommandAPI.PrintError(
+                    Chat.PrintError(
                         $"Automatic sorting failed: {(scrapFailed > 0 ? $"{scrapFailed} scrap items {(toolsFailed > 0 ? "and " : "")}" : "")}{(toolsFailed > 0 ? $"{toolsFailed} tool items" : "")} couldn't be sorted"
                     );
                 else
-                    ChatCommandAPI.ChatCommandAPI.Print("Finished sorting items");
+                    Chat.Print("Finished sorting items");
             }
             else
             {
@@ -198,7 +199,7 @@ public class SortItemsCommand : Command
         }
         catch (Exception e)
         {
-            ChatCommandAPI.ChatCommandAPI.PrintError(
+            Chat.PrintError(
                 "Automatic sorting failed due to an internal error, check the log for details"
             );
             LethalShipSort.Logger.LogError($"Error while autosorting items: {e}");
@@ -250,11 +251,9 @@ public class SortItemsCommand : Command
             $"{(scrapFailed > 0 ? $"{scrapFailed} scrap items {(toolsFailed > 0 ? "and " : "")}" : "")}{(toolsFailed > 0 ? $"{toolsFailed} tool items" : "")} couldn't be sorted";
 
         if (scrapFailed != 0 || toolsFailed != 0)
-            ChatCommandAPI.ChatCommandAPI.PrintError(
-                $"{errorPrefix}: <noparse>" + error + "</noparse>"
-            );
+            Chat.PrintError($"{errorPrefix}: <noparse>" + error + "</noparse>");
         else
-            ChatCommandAPI.ChatCommandAPI.Print("Finished sorting items");
+            Chat.Print("Finished sorting items");
     }
 
     public static int SortItems(Dictionary<GrabbableObject, ItemPosition> items) =>
