@@ -1,48 +1,45 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- BepInEx Properties -->
   <PropertyGroup>
     <AssemblyName>baer1.ShipSort</AssemblyName>
     <Product>LethalShipSort</Product>
-    <!-- Change to whatever version you're currently on. -->
     <Version>4.0.2</Version>
   </PropertyGroup>
-  <!-- Project Properties -->
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <RootNamespace>LethalShipSort</RootNamespace>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
-  <!-- Enable Nullable for better IDE null-checking -->
   <PropertyGroup>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-  <!-- Set NuGet Sources -->
   <PropertyGroup>
     <RestoreAdditionalProjectSources>
-      https://api.nuget.org/v3/index.json;
-      https://nuget.bepinex.dev/v3/index.json
-    </RestoreAdditionalProjectSources>
+            https://api.nuget.org/v3/index.json;
+            https://nuget.bepinex.dev/v3/index.json
+        </RestoreAdditionalProjectSources>
   </PropertyGroup>
-  <!-- Embed Debug Symbols for Easier Debugging -->
   <PropertyGroup>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>embedded</DebugType>
-    <!--
-        Trim the project path to prevent players from potentially
-        viewing Private Information in stack traces.
-        -->
     <PathMap>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))=./</PathMap>
+    <DefaultItemExcludes>Lua-CSharp/**</DefaultItemExcludes>
   </PropertyGroup>
-  <!-- Primary Package References -->
   <ItemGroup>
-    <PackageReference Include="baer1.ChatCommandAPI" Version="*" />
+    <PackageReference Include="baer1.ChatCommandAPI" Version="*" PrivateAssets="all" />
+    <PackageReference Include="LuaCSharp" Version="0.5.6" PrivateAssets="all" />
     <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />
+    <PackageReference
+      Include="BepInEx.AssemblyPublicizer.MSBuild"
+      Version="0.4.3"
+      PrivateAssets="all"
+    />
     <PackageReference Include="BepInEx.Core" Version="5.*" PrivateAssets="all" />
     <PackageReference Include="BepInEx.PluginInfoProps" Version="2.*" PrivateAssets="all" />
     <PackageReference
       Include="LethalCompany.GameLibs.Steam"
-      Version="81.0.0-ngd.0"
+      Version="*-*"
+      Publicize="true"
       PrivateAssets="all"
     />
     <PackageReference
