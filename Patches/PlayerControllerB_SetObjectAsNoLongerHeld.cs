@@ -49,7 +49,7 @@ internal static class GrabbableObject_DiscardItemOnClient
                     rel = SortAPI.TRANSFORM.World;
                     goto recalc;
                 case SortAPI.TRANSFORM.World:
-                    Chat.PrintError("[SortHelper] fuck you");
+                    Chat.PrintError("[SortHelper] World not found");
                     return;
                 default:
                     rel = SortAPI.TRANSFORM.Ship;
