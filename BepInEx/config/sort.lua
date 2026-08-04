@@ -19,17 +19,25 @@ end
 
 function cupboard_or(cupboard_pos, fallback_pos)
     if unlockables[UNLOCKABLE_CUPBOARD] then
-        return ItemPos(randomize_scaled(raycast(cupboard_pos, TRANSFORM_CUPBOARD), 0.02)):with_parent(PARENT_CUPBOARD)
+        return ItemPos(randomize_scaled(cupboard_pos, 0.02)):with_parent(PARENT_CUPBOARD)
     elseif fallback_pos == nil then
         return nil
     else
-        return randomize_scaled(raycast(fallback_pos), 0.02)
+        return ItemPos(randomize_scaled(raycast(fallback_pos), 0.02))
     end
 end
 
 function cupboard_or_rot(cupboard_pos, fallback_pos, fallback_rot)
     if unlockables[UNLOCKABLE_CUPBOARD] then
-        return ItemPos(randomize_scaled(raycast(cupboard_pos, TRANSFORM_CUPBOARD), 0.02)):with_parent(PARENT_CUPBOARD)
+        return ItemPos(randomize_scaled(cupboard_pos, 0.02)):with_parent(PARENT_CUPBOARD)
+    else
+        return ItemPos(randomize_scaled(raycast(fallback_pos), 0.02)):with_rotation(fallback_rot)
+    end
+end
+
+function cupboard_rot_or_rot(cupboard_pos, cupboard_rot, fallback_pos, fallback_rot)
+    if unlockables[UNLOCKABLE_CUPBOARD] then
+        return ItemPos(randomize_scaled(cupboard_pos, 0.02)):with_parent(PARENT_CUPBOARD):with_rotation(cupboard_rot)
     else
         return ItemPos(randomize_scaled(raycast(fallback_pos), 0.02)):with_rotation(fallback_rot)
     end
@@ -49,14 +57,52 @@ function first_x_on_cruiser(item, x, cruiser_pos, cruiser_top_pos, cruiser_rot, 
     end
 end
 
+item_on_cruiser = {}
+function first_x_on_cruiser_where(item, x, predicate, cruiser_pos, cruiser_top_pos, cruiser_rot, fallback_pos)
+    if item_on_cruiser[item.name] == nil then
+        item_on_cruiser[item.name] = 0
+    end
+    if unlockables[UNLOCKABLE_CRUISER] and predicate(item) and item_on_cruiser[item.name] < x and item.index < item.count then
+        item_on_cruiser[item.name] = item_on_cruiser[item.name] + 1
+        return ItemPos((function()
+            if cruiser_top then
+                return cruiser_top_pos
+            else
+                return cruiser_pos
+            end
+        end)()):with_parent(PARENT_CRUISER):with_rotation(cruiser_rot)
+    else
+        return fallback_pos
+    end
+end
+
+fallback_tool_items = {}
+last_fallback_tool_items = {}
+fallback_tool_items_c = 0
+function fallback_tool_item(i, v)
+    if fallback_tool_items[v.name] == nil then
+        if fallback_tool_items_c % 2 == 0 then
+            fallback_tool_items[v.name] = raycast(Vector3(0 + fallback_tool_items_c / 2, 3, -6.4))
+        else
+            fallback_tool_items[v.name] = raycast(Vector3(0 + (fallback_tool_items_c - 1) / 2, 3, -7.4))
+        end
+        fallback_tool_items_c = fallback_tool_items_c + 1
+        last_fallback_tool_items = { v.name }
+    end
+    if last_fallback_tool_items[1] == v.name then
+        table.insert(last_fallback_tool_items, i)
+    end
+    retval[i] = fallback_tool_items[v.name]
+end
+
 retval = {}
 
 -- Y
-CUPBOARD_ABOVE = 3.2;
-CUPBOARD_TOP = 2.4;
-CUPBOARD_MIDDLE_1 = 2;
-CUPBOARD_MIDDLE_2 = 1.5;
-CUPBOARD_BOTTOM = 0.5;
+CUPBOARD_ABOVE = 3;
+CUPBOARD_TOP = 2.2;
+CUPBOARD_MIDDLE_1 = 1.5;
+CUPBOARD_MIDDLE_2 = 1.025;
+CUPBOARD_BOTTOM = 0.24;
 
 -- Y
 CRUISER_ABOVE = 2.4;
@@ -89,7 +135,6 @@ if moon.id == 3 then
     end
 end
 
-shotguns_on_cruiser = 0
 for i, v in pairs(items) do
     if v.name == "ClipboardManual" or v.name == "StickyNoteItem" then
         -- skip these items
@@ -104,18 +149,9 @@ for i, v in pairs(items) do
         retval[i] = first_x_on_cruiser(v, 1, Vector3(CRUISER_RIGHT, CRUISER_TOP, -2.4), Vector3(-1.3, CRUISER_ABOVE, -3.7), -90, cupboard_or_rot(Vector3(-1.9, 0.6, CUPBOARD_MIDDLE_2), Vector3(-2.5, 3, -6.65), -90))
     elseif v.name == "ShotgunItem" then
         if v.type == "ShotgunItem" then
-            if v.arg == 2 and shotguns_on_cruiser < 2 then
-                shotguns_on_cruiser = shotguns_on_cruiser + 1
-                retval[i] = ItemPos((function()
-                    if cruiser_top then
-                        return nil
-                    else
-                        return Vector3(CRUISER_RIGHT + 0.04, CRUISER_TOP, -1.2)
-                    end
-                end)()):with_parent(PARENT_CRUISER)
-            else
-                retval[i] = raycast(Vector3(8.9 - (0.15 * v.arg), 2, -5.5))
-            end
+            retval[i] = first_x_on_cruiser_where(v, 2, (function(item)
+                return item.arg >= 2
+            end), Vector3(CRUISER_RIGHT + 0.04, CRUISER_TOP, -1.2), nil, 0, raycast(Vector3(8.9 - (0.15 * v.arg), 2, -5.5)))
         else
             retval[i] = raycast(Vector3(9.05, 2, -5.5))
         end
@@ -144,53 +180,65 @@ for i, v in pairs(items) do
         retval[i] = below(Vector3(9, 2, -8.25))
 
     elseif v.name == "WalkieTalkie" then
-        retval[i] = cupboard_or(Vector3(-1.4, 0.6, CUPBOARD_TOP), Vector3(-3.7, 3, -6.6))
+        retval[i] = cupboard_or(Vector3(-0.45, 0.5, CUPBOARD_MIDDLE_1), Vector3(-3.7, 3, -6.6))
     elseif v.name == "BBFlashlight" then
-        retval[i] = cupboard_or(Vector3(-1.3, 0.2, CUPBOARD_MIDDLE_1), Vector3(-4.1, 3, -6.6))
+        retval[i] = cupboard_or(Vector3(-1.1, 0.55, CUPBOARD_MIDDLE_1), Vector3(-4.1, 3, -6.6))
     elseif v.name == "ShovelItem" then
         retval[i] = first_x_on_cruiser(v, 4, Vector3(CRUISER_RIGHT, CRUISER_MIDDLE, -2), Vector3(-1.3, CRUISER_ABOVE, -3.7), -90, cupboard_or_rot(Vector3(-1.5, 0.3, CUPBOARD_MIDDLE_2), Vector3(-4.5, 3, -6.8), -90))
     elseif v.name == "LockPickerItem" then
-        retval[i] = cupboard_or_rot(Vector3(-2, 0.5, CUPBOARD_TOP), Vector3(-1.8, 3, -6.8), 90)
+        retval[i] = cupboard_or(Vector3(-2, 0.5, CUPBOARD_TOP), Vector3(-1.8, 3, -6.8)):with_rotation(90)
     elseif v.name == "FlashlightItem" then
-        retval[i] = cupboard_or(Vector3(-1.3, 0.65, CUPBOARD_MIDDLE_1), Vector3(-4.1, 3, -7.2))
+        retval[i] = cupboard_or(Vector3(-1.4, 0.45, CUPBOARD_MIDDLE_1), Vector3(-4.1, 3, -7.2))
     elseif v.name == "StunGrenade" then
-        retval[i] = cupboard_or_rot(Vector3(-1.2, 0.5, CUPBOARD_MIDDLE_1), Vector3(-3.7, 3, -7.35), -90)
+        retval[i] = cupboard_or(Vector3(-0.8, 0.59, CUPBOARD_MIDDLE_1), Vector3(-3.7, 3, -7.35)):with_rotation(-90)
     elseif v.name == "Boombox" then
         retval[i] = cupboard_or(Vector3(-0.3, 0.5, CUPBOARD_ABOVE), Vector3(-1.1, 3, -6.8))
     elseif v.name == "TZPChemical" then
-        retval[i] = cupboard_or_rot(Vector3(-0.55, 0.2, CUPBOARD_MIDDLE_1), Vector3(-3.3, 3, -6.525), -90)
+        retval[i] = cupboard_or(Vector3(-1.54, 0.4, CUPBOARD_TOP), Vector3(-3.3, 3, -6.525)):with_rotation(-90)
     elseif v.name == "PatcherGunItem" then
-        retval[i] = cupboard_or_rot(Vector3(-1.1, 0.6, CUPBOARD_TOP), Vector3(-4.9, 3, -6.5), -90)
+        retval[i] = cupboard_or_rot(Vector3(-1.2, 0.6, CUPBOARD_TOP), Vector3(-4.9, 3, -6.5), -90)
     elseif v.name == "JetpackItem" then
         retval[i] = cupboard_or(Vector3(-0.3, 0.2, CUPBOARD_BOTTOM), Vector3(-5.8, 3, -6.8))
     elseif v.name == "SprayPaintItem" then
-        retval[i] = cupboard_or_rot(Vector3(-1.7, 0.5, CUPBOARD_MIDDLE_1), Vector3(-3.3, 3, -7.3), -90)
+        retval[i] = cupboard_or(Vector3(-1.7, 0.55, CUPBOARD_MIDDLE_1), Vector3(-3.3, 3, -7.3)):with_rotation(-90)
     elseif v.name == "WeedKillerItem" then
-        retval[i] = first_x_on_cruiser(v, math.huge, Vector3(CRUISER_RIGHT, CRUISER_MIDDLE, -0.77), Vector3(-0.9, CRUISER_ABOVE, -3.7), -90, cupboard_or_rot(Vector3(-2.05, 0.5, CUPBOARD_MIDDLE_1), Vector3(-2.5, 3, -7.3), -90))
+        retval[i] = first_x_on_cruiser(v, math.huge, Vector3(CRUISER_RIGHT, CRUISER_MIDDLE, -0.77), Vector3(-0.9, CRUISER_ABOVE, -3.7), -90, cupboard_or(Vector3(-2, 0.55, CUPBOARD_MIDDLE_1), Vector3(-2.5, 3, -7.3)):with_rotation(-90))
     elseif v.name == "BeltBagItem" then
         if v.type == "BeltBagItem" and v.arg > 0 then
-            retval[i] = cupboard_or(Vector3(-0.35, 0.5, CUPBOARD_TOP), Vector3(-5, 3, -7.85))
+            retval[i] = cupboard_rot_or_rot(Vector3(-0.7, 0.5, CUPBOARD_TOP + 0.35), 180, Vector3(-5, 3, -7.85), 0)
         else
             retval[i] = cupboard_or(Vector3(-0.35, 0.5, CUPBOARD_TOP), Vector3(-5, 3, -7.1))
         end
     elseif v.name == "Key" then
         retval[i] = first_x_on_cruiser(v, 4, Vector3(CRUISER_LEFT, CRUISER_MIDDLE, -0.7), Vector3(-0.9, CRUISER_ABOVE, -3.3), -90, cupboard_or(Vector3(-0.3, 0.6, CUPBOARD_MIDDLE_2), Vector3(8.6, 2, -6.6)))
     elseif v.name == "ShotgunShell" then
-        retval[i] = first_x_on_cruiser(v, 2, Vector3(CRUISER_LEFT, CRUISER_TOP, -0.7), Vector3(-0.9, CRUISER_ABOVE, -3.7), -90, cupboard_or(Vector3(-0.3, 0.6, CUPBOARD_MIDDLE_1), Vector3(8.75, 2, -6.05)))
+        retval[i] = first_x_on_cruiser(v, 2, Vector3(CRUISER_LEFT, CRUISER_TOP, -0.7), Vector3(-0.9, CRUISER_ABOVE, -3.7), -90, raycast(Vector3(8.75, 2, -6.05)))
 
     elseif v.name == "RadarBoosterDevice" then
-        retval[i] = first_x_on_cruiser(v, 1, Vector3(0, CRUISER_BOTTOM, CRUISER_FRONT), Vector3(-1.3, CRUISER_ABOVE, -3.7), 0, cupboard_or(Vector3(-2, 0.6, 0.5), nil)) -- TODO: POSITION proper fallback position
+        retval[i] = first_x_on_cruiser(v, 1, Vector3(0, CRUISER_BOTTOM, CRUISER_FRONT), Vector3(-1.3, CRUISER_ABOVE, -3.7), 0, nil) -- TODO: POSITION proper fallback position
+        if retval[i] == nil then
+            fallback_tool_item(i, v)
+        end
 
 
     elseif not v.scrap then
         -- Tool item
-        retval[i] = cupboard_or(Vector3(-2, 0.6, 0.5), nil)
+        fallback_tool_item(i, v)
     elseif v.large then
         -- Two hand item
         retval[i] = below(Vector3(-4.5, 3, -5.25))
     else
         -- One hand item
         retval[i] = below(Vector3(-2.25, 3, -5.25))
+    end
+end
+
+if fallback_tool_items_c % 2 ~= 0 then
+    pos = raycast(Vector3(0 + (fallback_tool_items_c - 1) / 2, 3, -6.9))
+    for _, i in ipairs(last_fallback_tool_items) do
+        if _ > 1 then
+            retval[i] = pos
+        end
     end
 end
 

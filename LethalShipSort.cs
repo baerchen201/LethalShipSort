@@ -241,20 +241,19 @@ public class LethalShipSort : BaseUnityPlugin
                         out _
                     );
 
-                    var position =
+                    var position = parent.InverseTransformPoint(
                         (
                             pos.RelativeTo != SortAPI.RELATIVE.Parent
-                                ? parent.InverseTransformPoint(
-                                    relative.TransformPoint(pos.Position)
-                                )
-                                : pos.Position
+                                ? relative.TransformPoint(pos.Position)
+                                : parent.TransformPoint(pos.Position)
                         )
-                        + (
-                            item.itemProperties != null
-                                ? (item.itemProperties.verticalOffset - VERTICAL_OFFSET)
-                                    * UnityEngine.Vector3.up
-                                : VERTICAL_OFFSET * UnityEngine.Vector3.down
-                        );
+                            + (
+                                item.itemProperties != null
+                                    ? (item.itemProperties.verticalOffset - VERTICAL_OFFSET)
+                                        * UnityEngine.Vector3.up
+                                    : VERTICAL_OFFSET * UnityEngine.Vector3.down
+                            )
+                    );
                     var floorYRot = pos.RotationMode switch
                     {
                         SortAPI.ROTATE.Local => (
@@ -377,7 +376,13 @@ public class LethalShipSort : BaseUnityPlugin
             Logger.LogDebug($"<< Hit {hitInfo.point} ({hitInfo.collider})");
 #endif
             return new ValueTask<int>(
-                ctx.Return(new Vector3(transform.InverseTransformPoint(hitInfo.point)))
+                ctx.Return(
+                    new Vector3(
+                        transform.InverseTransformPoint(
+                            hitInfo.point + VERTICAL_OFFSET * UnityEngine.Vector3.up
+                        )
+                    )
+                )
             );
         }
 
