@@ -123,6 +123,14 @@ public class LethalShipSort : BaseUnityPlugin
         lua.OpenMathLibrary();
         lua.OpenBitwiseLibrary();
 
+        lua.Environment[SortAPI.ENV_ABOUT] =
+            $"{MyPluginInfo.PLUGIN_GUID} v{MyPluginInfo.PLUGIN_VERSION}";
+        lua.Environment[SortAPI.ENV_SCRIPT] = Path.GetFileName(scriptPath);
+        var version = new Version(MyPluginInfo.PLUGIN_VERSION);
+        lua.Environment[SortAPI.ENV_VERSION_MAJOR] = version.Major;
+        lua.Environment[SortAPI.ENV_VERSION_MINOR] = version.Minor;
+        lua.Environment[SortAPI.ENV_VERSION_PATCH] = version.Build;
+
         lua.Environment[nameof(print)] = new LuaFunction(print);
         lua.Environment[nameof(raycast)] = new LuaFunction(raycast);
         lua.Environment[nameof(transform)] = new LuaFunction(transform);
@@ -136,6 +144,8 @@ public class LethalShipSort : BaseUnityPlugin
         AddEnum(lua, typeof(SortAPI.ROTATE), false);
         AddEnum(lua, typeof(SortAPI.TRANSFORM), false);
 
+        lua.Environment[SortAPI.VECTOR3_ZERO] = new Vector3(UnityEngine.Vector3.zero);
+        lua.Environment[SortAPI.VECTOR3_ONE] = new Vector3(UnityEngine.Vector3.one);
         lua.Environment[SortAPI.VECTOR3_DOWN] = new Vector3(UnityEngine.Vector3.down);
         lua.Environment[SortAPI.VECTOR3_UP] = new Vector3(UnityEngine.Vector3.up);
         lua.Environment[SortAPI.VECTOR3_LEFT] = new Vector3(UnityEngine.Vector3.left);
@@ -236,10 +246,23 @@ public class LethalShipSort : BaseUnityPlugin
                         player.DropAllHeldItemsAndSyncNonexact();
 
                     var parent = GetTransform((SortAPI.TRANSFORM)pos.ParentTo, out _);
+                    if (parent == null)
+                    {
+                        Logger.LogError($"null parent at #{i}: {pos.ParentTo}");
+                        failed++;
+                        continue;
+                    }
+
                     var relative = GetTransform(
                         SortAPI.ToTransform(pos.ParentTo, pos.RelativeTo),
                         out _
                     );
+                    if (relative == null)
+                    {
+                        Logger.LogError($"null relative at #{i}: {pos.RelativeTo}");
+                        failed++;
+                        continue;
+                    }
 
                     var position = parent.InverseTransformPoint(
                         (
@@ -285,6 +308,10 @@ public class LethalShipSort : BaseUnityPlugin
                         position,
                         false
                     );
+
+                    item.rotateObject = pos.ParentTo == SortAPI.PARENT.Microwave;
+                    // && parent.gameObject.GetComponentInChildren<MicrowaveItem>()?.whirringAudio.isPlaying is true
+                    // ^^ this doesn't work until you open and close microwave because this game is a piece of shit
                 }
 
                 return $"sorted {sorted}, failed {failed}, skipped {skipped}";
@@ -353,6 +380,13 @@ public class LethalShipSort : BaseUnityPlugin
             pos.RelativeTo,
             out var transformDirection // i have to do this horribleness cause the game is gay and half the objects in the game rotate the vector weirdly
         );
+        if (transform == null)
+        {
+            Logger.LogError(
+                $"null relative for raycast: {pos.RelativeTo}\n{ctx.State.GetTraceback()}"
+            );
+            goto nohit;
+        }
         var origin = transform.TransformPoint(pos.Position);
         var direction = transformDirection
             ? transform.TransformDirection(pos.Direction)
@@ -386,6 +420,7 @@ public class LethalShipSort : BaseUnityPlugin
             );
         }
 
+        nohit:
 #if DEBUG
         Logger.LogDebug("<< No hit");
 #endif
@@ -419,7 +454,22 @@ public class LethalShipSort : BaseUnityPlugin
         );
 #endif
         var fromTransform = GetTransform((SortAPI.TRANSFORM)from, out _);
+        if (fromTransform == null)
+        {
+            Logger.LogError(
+                $"null from for transform: {(SortAPI.TRANSFORM)from}\n{ctx.State.GetTraceback()}"
+            );
+            return new ValueTask<int>(ctx.Return(new LuaValue()));
+        }
+
         var toTransform = GetTransform((SortAPI.TRANSFORM)to, out _);
+        if (toTransform == null)
+        {
+            Logger.LogError(
+                $"null to for transform: {(SortAPI.TRANSFORM)to}\n{ctx.State.GetTraceback()}"
+            );
+            return new ValueTask<int>(ctx.Return(new LuaValue()));
+        }
 
         return new ValueTask<int>(
             ctx.Return(
@@ -452,70 +502,97 @@ public class LethalShipSort : BaseUnityPlugin
         }
     }
 
-    internal static Transform GetTransform(SortAPI.TRANSFORM transform, out bool transformDirection)
+    internal static Transform? GetTransform(
+        SortAPI.TRANSFORM transform,
+        out bool transformDirection
+    )
     {
         transformDirection = false;
         switch (transform)
         {
             case SortAPI.TRANSFORM.Ship:
                 transformDirection = true;
-                return GameObject.Find("/Environment/HangarShip").transform;
+                return GameObject.Find("/Environment/HangarShip")
+#if DEBUG
+                ?
+#endif
+                .transform;
             case SortAPI.TRANSFORM.World:
-                return GameObject.Find("/Environment").transform;
+                return GameObject.Find("/Environment")
+#if DEBUG
+                ?
+#endif
+                .transform;
 
             case SortAPI.TRANSFORM.Cruiser:
                 transformDirection = true;
-                return FindFirstObjectByType<VehicleController>().transform;
+                return FindFirstObjectByType<VehicleController>()?.transform;
             case SortAPI.TRANSFORM.Teleporter:
-                return GameObject.Find("/Teleporter(Clone)").transform;
+                return GameObject.Find("/Teleporter(Clone)")?.transform;
             case SortAPI.TRANSFORM.Television:
-                return GameObject.Find("/TelevisionContainer(Clone)").transform;
+                return GameObject.Find("/TelevisionContainer(Clone)")?.transform;
             case SortAPI.TRANSFORM.Cupboard:
-                return GameObject.Find("/Environment/HangarShip/StorageCloset").transform;
+                return GameObject.Find("/Environment/HangarShip/StorageCloset")
+#if DEBUG
+                ?
+#endif
+                .transform;
             case SortAPI.TRANSFORM.FileCabinet:
-                return GameObject.Find("/Environment/HangarShip/FileCabinet").transform;
+                return GameObject.Find("/Environment/HangarShip/FileCabinet")
+#if DEBUG
+                ?
+#endif
+                .transform;
             case SortAPI.TRANSFORM.Toilet:
-                return GameObject.Find("/Toilet(Clone)").transform;
+                return GameObject.Find("/Toilet(Clone)")?.transform;
             case SortAPI.TRANSFORM.Shower:
-                return GameObject.Find("/Shower(Clone)").transform;
+                return GameObject.Find("/Shower(Clone)")?.transform;
             case SortAPI.TRANSFORM.RecordPlayer:
-                return GameObject.Find("/RecordPlayerContainer(Clone)").transform;
+                return GameObject.Find("/RecordPlayerContainer(Clone)")?.transform;
             case SortAPI.TRANSFORM.Table:
-                return GameObject.Find("/NormalTableContainer(Clone)").transform;
+                return GameObject.Find("/NormalTableContainer(Clone)")?.transform;
             case SortAPI.TRANSFORM.RomanticTable:
-                return GameObject.Find("/RomanticTableContainer(Clone)").transform;
+                return GameObject.Find("/RomanticTableContainer(Clone)")?.transform;
             case SortAPI.TRANSFORM.Bunkbeds:
-                return GameObject.Find("/Environment/HangarShip/Bunkbeds").transform;
+                return GameObject.Find("/Environment/HangarShip/Bunkbeds")
+#if DEBUG
+                ?
+#endif
+                .transform;
             case SortAPI.TRANSFORM.Terminal:
-                return GameObject.Find("/Environment/HangarShip/Terminal").transform;
+                return GameObject.Find("/Environment/HangarShip/Terminal")
+#if DEBUG
+                ?
+#endif
+                .transform;
             case SortAPI.TRANSFORM.SignalTranslator:
-                return GameObject.Find("/SignalTranslator(Clone)").transform;
+                return GameObject.Find("/SignalTranslator(Clone)")?.transform;
             case SortAPI.TRANSFORM.LoudHorn:
-                return GameObject.Find("/ShipHorn(Clone)").transform;
+                return GameObject.Find("/ShipHorn(Clone)")?.transform;
             case SortAPI.TRANSFORM.InverseTeleporter:
-                return GameObject.Find("/InverseTeleporter(Clone)").transform;
+                return GameObject.Find("/InverseTeleporter(Clone)")?.transform;
             case SortAPI.TRANSFORM.JackOLantern:
-                return GameObject.Find("/PumpkinUnlockableContainer(Clone)").transform;
+                return GameObject.Find("/PumpkinUnlockableContainer(Clone)")?.transform;
             case SortAPI.TRANSFORM.WelcomeMat:
-                return GameObject.Find("/WelcomeMatContainer(Clone)").transform;
+                return GameObject.Find("/WelcomeMatContainer(Clone)")?.transform;
             case SortAPI.TRANSFORM.Goldfish:
-                return GameObject.Find("/FishBowlContainer(Clone)").transform;
+                return GameObject.Find("/FishBowlContainer(Clone)")?.transform;
             case SortAPI.TRANSFORM.PlushiePajamaMan:
-                return GameObject.Find("/PlushiePJManContainer(Clone)").transform;
+                return GameObject.Find("/PlushiePJManContainer(Clone)")?.transform;
             case SortAPI.TRANSFORM.DiscoBall:
-                return GameObject.Find("/DiscoBallContainer(Clone)").transform;
+                return GameObject.Find("/DiscoBallContainer(Clone)")?.transform;
             case SortAPI.TRANSFORM.Microwave:
-                return GameObject.Find("/MicrowaveContainer(Clone)").transform;
+                return GameObject.Find("/MicrowaveContainer(Clone)")?.transform;
             case SortAPI.TRANSFORM.SofaChair:
-                return GameObject.Find("/SofaChairContainer(Clone)").transform;
+                return GameObject.Find("/SofaChairContainer(Clone)")?.transform;
             case SortAPI.TRANSFORM.Fridge:
-                return GameObject.Find("/FridgeContainer(Clone)").transform;
+                return GameObject.Find("/FridgeContainer(Clone)")?.transform;
             case SortAPI.TRANSFORM.ClassicPainting:
-                return GameObject.Find("/ClassicPaintingContainer(Clone)").transform;
+                return GameObject.Find("/ClassicPaintingContainer(Clone)")?.transform;
             case SortAPI.TRANSFORM.ElectricChair:
-                return GameObject.Find("/ElectricChair(Clone)").transform;
+                return GameObject.Find("/ElectricChair(Clone)")?.transform;
             case SortAPI.TRANSFORM.DogHouse:
-                return GameObject.Find("/DogHouse(Clone)").transform;
+                return GameObject.Find("/DogHouse(Clone)")?.transform;
 
             default:
                 throw new ArgumentOutOfRangeException();

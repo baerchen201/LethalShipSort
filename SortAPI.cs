@@ -5,6 +5,12 @@ namespace LethalShipSort;
 
 public static class SortAPI
 {
+    public const string ENV_ABOUT = "about";
+    public const string ENV_SCRIPT = "script";
+    public const string ENV_VERSION_MAJOR = "version_major";
+    public const string ENV_VERSION_MINOR = "version_minor";
+    public const string ENV_VERSION_PATCH = "version_patch";
+
     public const string ENV_ITEMS = "items";
     public const string ENV_MOON = "moon";
     public const string ENV_DAYS_LEFT = "remaining_days";
@@ -23,6 +29,8 @@ public static class SortAPI
     public const string MOON_NAME = "name";
     public const string MOON_SCENE_NAME = "scene";
 
+    public const string VECTOR3_ZERO = nameof(VECTOR3_ZERO);
+    public const string VECTOR3_ONE = nameof(VECTOR3_ONE);
     public const string VECTOR3_DOWN = nameof(VECTOR3_DOWN);
     public const string VECTOR3_UP = nameof(VECTOR3_UP);
     public const string VECTOR3_LEFT = nameof(VECTOR3_LEFT);
@@ -181,7 +189,7 @@ public static class SortAPI
                 return tetraChemicalItem.fuel;
 
             case RadarBoosterItem radarBoosterItem:
-                return radarBoosterItem.radarBoosterName;
+                return radarBoosterItem.radarEnabled;
 
             case JetpackItem jetpackItem:
                 return jetpackItem.jetpackBroken;
