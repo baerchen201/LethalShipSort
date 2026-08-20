@@ -31,6 +31,8 @@ public class LethalShipSort : BaseUnityPlugin
     internal static new ManualLogSource Logger { get; private set; } = null!;
     internal static Harmony Harmony = null!;
 
+    private static readonly Version VERSION = new(MyPluginInfo.PLUGIN_VERSION);
+
     private ConfigEntry<string> scriptPath = null!;
     public string ScriptPath =>
         Path.IsPathRooted(scriptPath.Value)
@@ -126,10 +128,11 @@ public class LethalShipSort : BaseUnityPlugin
         lua.Environment[SortAPI.ENV_ABOUT] =
             $"{MyPluginInfo.PLUGIN_GUID} v{MyPluginInfo.PLUGIN_VERSION}";
         lua.Environment[SortAPI.ENV_SCRIPT] = Path.GetFileName(scriptPath);
-        var version = new Version(MyPluginInfo.PLUGIN_VERSION);
-        lua.Environment[SortAPI.ENV_VERSION_MAJOR] = version.Major;
-        lua.Environment[SortAPI.ENV_VERSION_MINOR] = version.Minor;
-        lua.Environment[SortAPI.ENV_VERSION_PATCH] = version.Build;
+        lua.Environment[SortAPI.ENV_VERSION_MAJOR] = VERSION.Major;
+        lua.Environment[SortAPI.ENV_VERSION_MINOR] = VERSION.Minor;
+        lua.Environment[SortAPI.ENV_VERSION_PATCH] = VERSION.Build;
+
+        lua.Environment[nameof(expect_version)] = new LuaFunction(expect_version);
 
         lua.Environment[nameof(print)] = new LuaFunction(print);
         lua.Environment[nameof(raycast)] = new LuaFunction(raycast);
@@ -318,6 +321,49 @@ public class LethalShipSort : BaseUnityPlugin
             default:
                 throw new ArgumentException("expected single return value, got multiple");
         }
+    }
+
+    private static ValueTask<int> expect_version(
+        LuaFunctionExecutionContext ctx,
+        CancellationToken cancellationToken
+    )
+    {
+        switch (ctx.ArgumentCount)
+        {
+            case 1:
+                var min = ctx.GetArgument<int>(0);
+                if (min < 0)
+                    throw new ArgumentOutOfRangeException();
+                if (VERSION.Major > min)
+                    Chat.PrintWarning(
+                        $"Version conflict (Script is outdated: expected v{min}, currently v{VERSION.Major})"
+                    );
+                else if (VERSION.Major < min)
+                    Chat.PrintWarning(
+                        $"Version conflict (Mod is outdated: expected v{min}, currently v{VERSION.Major})"
+                    );
+                break;
+
+            case 2:
+                min = ctx.GetArgument<int>(0);
+                var max = ctx.GetArgument<int>(1);
+                if (min < 0 || max <= min)
+                    throw new ArgumentOutOfRangeException();
+                if (VERSION.Major < min)
+                    Chat.PrintWarning(
+                        $"Version conflict (Mod is outdated: expected at least v{min}, currently v{VERSION.Major})"
+                    );
+                else if (VERSION.Major > max)
+                    Chat.PrintWarning(
+                        $"Version conflict (Script is outdated: expected at most v{max}, currently v{VERSION.Major})"
+                    );
+                break;
+            default:
+                throw new ArgumentException();
+        }
+
+        ctx.State.Environment[nameof(expect_version)] = new LuaValue();
+        return new ValueTask<int>(0);
     }
 
     private static ValueTask<int> print(
