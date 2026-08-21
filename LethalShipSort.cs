@@ -331,31 +331,35 @@ public class LethalShipSort : BaseUnityPlugin
         switch (ctx.ArgumentCount)
         {
             case 1:
-                var min = ctx.GetArgument<int>(0);
-                if (min < 0)
+                var major = ctx.GetArgument<int>(0);
+                if (major < 0)
                     throw new ArgumentOutOfRangeException();
-                if (VERSION.Major > min)
+                if (VERSION.Major > major)
                     Chat.PrintWarning(
-                        $"Version conflict (Script is outdated: expected v{min}, currently v{VERSION.Major})"
+                        $"Version conflict (Script is outdated: expected v{major}, currently v{VERSION.Major})"
                     );
-                else if (VERSION.Major < min)
+                else if (VERSION.Major < major)
                     Chat.PrintWarning(
-                        $"Version conflict (Mod is outdated: expected v{min}, currently v{VERSION.Major})"
+                        $"Version conflict (Mod is outdated: expected v{major}, currently v{VERSION.Major})"
                     );
                 break;
 
             case 2:
-                min = ctx.GetArgument<int>(0);
-                var max = ctx.GetArgument<int>(1);
-                if (min < 0 || max <= min)
+                major = ctx.GetArgument<int>(0);
+                var minMinor = ctx.GetArgument<int>(1);
+                if (major < 0 || minMinor < 0)
                     throw new ArgumentOutOfRangeException();
-                if (VERSION.Major < min)
+                if (VERSION.Major < major)
                     Chat.PrintWarning(
-                        $"Version conflict (Mod is outdated: expected at least v{min}, currently v{VERSION.Major})"
+                        $"Version conflict (Mod is outdated: expected v{major}, currently v{VERSION.Major})"
                     );
-                else if (VERSION.Major > max)
+                else if (VERSION.Major > major)
                     Chat.PrintWarning(
-                        $"Version conflict (Script is outdated: expected at most v{max}, currently v{VERSION.Major})"
+                        $"Version conflict (Script is outdated: expected v{major}, currently v{VERSION.Major})"
+                    );
+                else if (VERSION.Minor < minMinor)
+                    Chat.PrintWarning(
+                        $"Version conflict (Mod is outdated: expected at least v{major}.{minMinor}, currently v{VERSION.Major}.{VERSION.Minor})"
                     );
                 break;
             default:
