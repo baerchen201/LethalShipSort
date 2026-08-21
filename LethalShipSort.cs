@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -39,6 +40,9 @@ public class LethalShipSort : BaseUnityPlugin
             ? scriptPath.Value
             : Path.Join(Path.GetDirectoryName(Config.ConfigFilePath), scriptPath.Value);
 
+    private ConfigEntry<uint> timeout = null!;
+    public int Timeout => (int)Math.Min(int.MaxValue, timeout.Value);
+
     private void Awake()
     {
         const string CONFIG_SECTION_GENERAL = "General";
@@ -51,6 +55,12 @@ public class LethalShipSort : BaseUnityPlugin
             nameof(ScriptPath),
             "sort.lua",
             "The item sorting script to use (absolute path or relative to this config file)"
+        );
+        timeout = Config.Bind(
+            CONFIG_SECTION_GENERAL,
+            nameof(Timeout),
+            5U,
+            "The maximum execution time for the sorting script in seconds (prevents freezing, 0 to disable [NOT RECOMMENDED])"
         );
 
         Harmony = new Harmony(MyPluginInfo.PLUGIN_GUID);
@@ -165,35 +175,46 @@ public class LethalShipSort : BaseUnityPlugin
             unlockablesList
         );
 
+        var startTime = DateTime.UtcNow;
         var cancellationToken = new CancellationTokenSource();
-        var task = lua.DoFileAsync(scriptPath, cancellationToken.Token);
+        var task = Task.Run(async () => await lua.DoFileAsync(scriptPath, cancellationToken.Token));
         try
         {
-            if (
-                !task.AsTask()
-                    .Wait(
-                        new TimeSpan(
-                            5 * 1000 * 10000 // 5 seconds
-                        )
-                    )
-            )
-            {
+            var timeout = Instance.Timeout;
 #if DEBUG
-                Chat.PrintWarning("Script execution passed release build timeout");
-                if (
-                    !task.AsTask()
-                        .Wait(
-                            new TimeSpan(
-                                25 * 1000 * 10000 // 25 seconds
-                            )
-                        )
-                )
+            var defaultTimeout = (int)(uint)Instance.timeout.DefaultValue; // no limiting here, the default should always be small enough to fit in an int
+            if (timeout <= defaultTimeout) // and it should always be above 0
+                goto timeout;
+
+            if (!task.Wait(new TimeSpan(0, 0, defaultTimeout)))
+            {
+                if (!task.Wait(new TimeSpan(0, 0, timeout - defaultTimeout)))
+                {
+                    cancellationToken.Cancel();
+                    throw new TimeoutException();
+                }
+                Chat.PrintWarning(
+                    $"Script execution time passed default timeout ({defaultTimeout} seconds), consider optimizing it"
+                );
+            }
+            goto skipTimeout;
+
+            timeout:
 #endif
+            if (timeout > 0)
+            {
+                if (!task.Wait(new TimeSpan(0, 0, timeout)))
                 {
                     cancellationToken.Cancel();
                     throw new TimeoutException();
                 }
             }
+            else
+                task.Wait();
+#if DEBUG
+            skipTimeout:
+            ;
+#endif
         }
         catch (AggregateException e)
         {
@@ -202,6 +223,7 @@ public class LethalShipSort : BaseUnityPlugin
             throw;
         }
 
+        var scriptEndTime = DateTime.UtcNow;
         var results = task.Result!;
 
         uint sorted = 0;
@@ -210,7 +232,7 @@ public class LethalShipSort : BaseUnityPlugin
         switch (results.Length)
         {
             case 0:
-                return "no items sorted";
+                return "no items sorted"; // TODO: throw exception? should this be enforced?
             case 1:
                 if (!results[0].TryRead<LuaTable>(out var result))
                     throw new ArgumentException(
@@ -317,7 +339,15 @@ public class LethalShipSort : BaseUnityPlugin
                     // ^^ this doesn't work until you open and close microwave because this game is a piece of shit
                 }
 
-                return $"sorted {sorted}, failed {failed}, skipped {skipped}";
+                var sortEndTime = DateTime.UtcNow;
+                Logger.LogDebug(
+                    $"{nameof(startTime)}:{startTime.ToString("o", CultureInfo.InvariantCulture)} {nameof(scriptEndTime)}:{scriptEndTime.ToString("o", CultureInfo.InvariantCulture)} {nameof(sortEndTime)}:{sortEndTime.ToString("o", CultureInfo.InvariantCulture)}"
+                );
+                Logger.LogInfo(
+                    $"Script execution took {(scriptEndTime - startTime).ToReadableString()}, sorting took {(sortEndTime - scriptEndTime).ToReadableString()}"
+                );
+
+                return $"Sorted {sorted}/{items.Length} in {(sortEndTime - startTime).ToReadableString()}"; // TODO: include failed
             default:
                 throw new ArgumentException("expected single return value, got multiple");
         }
@@ -648,4 +678,12 @@ public class LethalShipSort : BaseUnityPlugin
                 throw new ArgumentOutOfRangeException();
         }
     }
+
+#if DEBUG
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static bool EnableDebugMode(StartOfRound sor, GameNetworkManager gnm)
+    {
+        return sor.IsServer && gnm.disableSteam && sor.connectedPlayersAmount <= 0;
+    }
+#endif
 }

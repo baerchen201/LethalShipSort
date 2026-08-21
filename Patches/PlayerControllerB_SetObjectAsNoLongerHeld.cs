@@ -13,7 +13,10 @@ internal static class GrabbableObject_DiscardItemOnClient
 
     private static void Postfix(ref GrabbableObject __instance)
     {
-        if (enable && StartOfRound.Instance.connectedPlayersAmount <= 0)
+        if (
+            enable
+            && LethalShipSort.EnableDebugMode(StartOfRound.Instance, GameNetworkManager.Instance)
+        )
         {
             var warn = false;
             var pos =

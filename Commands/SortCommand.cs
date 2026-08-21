@@ -2,10 +2,12 @@ using System;
 using System.IO;
 using ChatCommandAPI;
 using ChatCommandAPI.Utils;
-using LethalShipSort.Patches;
 using Lua;
 using UnityEngine;
 using Object = UnityEngine.Object;
+#if DEBUG
+using LethalShipSort.Patches;
+#endif
 
 namespace LethalShipSort.Commands;
 
@@ -21,7 +23,7 @@ public class SortCommand : Command
     {
         var sor = StartOfRound.Instance;
 #if DEBUG
-        if (!sor.inShipPhase && !(sor.IsServer && GameNetworkManager.Instance.disableSteam))
+        if (!sor.inShipPhase && !LethalShipSort.EnableDebugMode(sor, GameNetworkManager.Instance))
 #else
         if (!sor.inShipPhase)
 #endif
@@ -61,6 +63,10 @@ public class SortCommand : Command
         catch (ArgumentException e)
         {
             throw new CommandException($"Script result invalid: {e.Message}");
+        }
+        catch (TimeoutException)
+        {
+            throw new CommandException("Script execution timed out");
         }
         catch (LuaRuntimeException e)
         {
