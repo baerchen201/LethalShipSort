@@ -1,8 +1,10 @@
 using System;
-using System.IO;
+using System.Collections.Generic;
+using System.Linq;
 using ChatCommandAPI;
 using ChatCommandAPI.Utils;
 using Lua;
+using Unity.Netcode;
 using UnityEngine;
 using Object = UnityEngine.Object;
 #if DEBUG
@@ -28,37 +30,66 @@ public class SortCommand : Command
         if (!sor.inShipPhase)
 #endif
             throw new ShipIsLandedException();
+
+        var mod = LethalShipSort.Instance;
+
+        if (!string.IsNullOrWhiteSpace(args))
+        {
+            if (args.Trim().ToLowerInvariant() == "reload")
+            {
+                try
+                {
+                    mod.ReloadScript();
+                    Chat.Print("Script reloaded successfully.");
+                }
+                finally
+                {
+                    var nm = NetworkManager.Singleton;
+                    if (nm.IsServer)
+                    {
+                        nm.CustomMessagingManager.SendNamedMessageToAll(
+                            LethalShipSort.NETWORK_MESSAGE_NAME,
+                            mod.CreateNetworkMessage(),
+                            NetworkDelivery.ReliableFragmentedSequenced
+                        );
+                    }
+                }
+
+                return;
+            }
+        }
+
         var items = Object.FindObjectsByType<GrabbableObject>(
             FindObjectsInactive.Exclude,
             FindObjectsSortMode.InstanceID
         );
         var l = items.Length;
-        items = LethalShipSort.FilterItems(items, sor.localPlayerController);
+        items = LethalShipSort.FilterItems(items, sor.localPlayerController).ToArray();
         if (items.Length <= 0)
-            throw new CommandException("There are no items to sort");
+        {
+            Chat.Print("There are no items to sort");
+            return;
+        }
 
 #if DEBUG
         GrabbableObject_DiscardItemOnClient.enable = false;
 #endif
         try
         {
-            Chat.Print(
-                LethalShipSort.Instance.Sort(
-                    items,
-                    sor.localPlayerController,
-                    RoundManager.Instance.currentLevel,
-                    TimeOfDay.Instance.daysUntilDeadline,
-                    Object.FindAnyObjectByType<VehicleController>(FindObjectsInactive.Exclude)
-                        != null,
-                    Object.FindFirstObjectByType<ShipLights>().areLightsOn,
-                    sor.unlockablesList,
-                    (uint)(l - items.Length)
-                )
+            var ret = mod.Sort(
+                items,
+                sor.localPlayerController,
+                RoundManager.Instance.currentLevel,
+                TimeOfDay.Instance.daysUntilDeadline,
+                Object.FindAnyObjectByType<VehicleController>(FindObjectsInactive.Exclude) != null,
+                Object.FindFirstObjectByType<ShipLights>().areLightsOn,
+                sor.unlockablesList,
+                Args.Parse(args),
+                (uint)(l - items.Length)
             );
-        }
-        catch (FileNotFoundException e)
-        {
-            throw new CommandException($"Script '{e.FileName}' could not be found");
+            if (ret == null)
+                throw new CommandException($"Script '{mod.ScriptPath}' could not be found");
+            Chat.Print(ret);
         }
         catch (ArgumentException e)
         {

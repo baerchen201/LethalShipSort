@@ -22,4 +22,21 @@ internal static class Utils
             return string.Join(", ", sb);
         return "<1 second";
     }
+
+    public static string BytesToString(int bytes)
+    {
+        switch (bytes)
+        {
+            case < 0:
+                throw new ArgumentOutOfRangeException(nameof(bytes));
+            case < 1024:
+                return $"{bytes} bytes";
+            case < 1024 * 1024:
+                return $"{bytes / 1024}KB";
+            case < 1024 * 1024 * 1024:
+                return $"{bytes / (1024 * 1024)}MB";
+            default:
+                return $"{bytes / (1024f * 1024f * 1024f):F2}GB";
+        }
+    }
 }

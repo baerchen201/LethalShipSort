@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
@@ -17,14 +19,22 @@ using LethalShipSort.Commands;
 using LethalShipSort.LuaObjects;
 using Lua;
 using Lua.Standard;
+using Unity.Collections;
+using Unity.Netcode;
 using UnityEngine;
+using CompressionLevel = System.IO.Compression.CompressionLevel;
 using Vector3 = LethalShipSort.LuaObjects.Vector3;
 
 namespace LethalShipSort;
 
 [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
+[BepInDependency(LethalModUtils.MyPluginInfo.PLUGIN_GUID)]
+[BepInDependency(ChatCommandAPI.MyPluginInfo.PLUGIN_GUID)]
 public class LethalShipSort : BaseUnityPlugin
 {
+    internal const string NETWORK_MESSAGE_NAME = MyPluginInfo.PLUGIN_GUID;
+    internal const string PREFIX = "[ShipSort] ";
+    internal const int MAX_SHARE = 100 * 1024 * 1024; // 100MB
     internal const int LAYER_MASK = 268437761;
     private const float VERTICAL_OFFSET = 0.02f;
 
@@ -43,12 +53,41 @@ public class LethalShipSort : BaseUnityPlugin
     private ConfigEntry<uint> timeout = null!;
     public int Timeout => (int)Math.Min(int.MaxValue, timeout.Value);
 
+    private ConfigEntry<bool> shareConfig = null!;
+    public bool ShareConfig => shareConfig.Value;
+
+    private ConfigEntry<bool> useSharedConfig = null!;
+    public bool UseSharedConfig => useSharedConfig.Value && cachedSharedScript != null;
+
+    private ConfigEntry<int> sharedConfigSizeLimit = null!;
+    public int SharedConfigSizeLimit => sharedConfigSizeLimit.Value;
+
+    private string? cachedScript;
+    private MemoryStream? cachedCompressedScript;
+    private string? cachedSharedScript;
+
     private void Awake()
     {
         const string CONFIG_SECTION_GENERAL = "General";
+        const string CONFIG_SECTION_NETWORK = "Networking";
 
         Logger = base.Logger;
         Instance = this;
+
+        try
+        {
+            _verifyDeps();
+        }
+        catch (FileNotFoundException)
+        {
+            Logger.LogFatal("Missing required assembly, please verify your mod files");
+            throw;
+        }
+        catch (TypeLoadException)
+        {
+            Logger.LogFatal("Incompatible required assembly, please verify your mod files");
+            throw;
+        }
 
         scriptPath = Config.Bind(
             CONFIG_SECTION_GENERAL,
@@ -63,6 +102,28 @@ public class LethalShipSort : BaseUnityPlugin
             "The maximum execution time for the sorting script in seconds (prevents freezing, 0 to disable [NOT RECOMMENDED])"
         );
 
+        shareConfig = Config.Bind(
+            CONFIG_SECTION_NETWORK,
+            nameof(ShareConfig),
+            true,
+            "Shares your sorting script to other players with the mod when they join your lobby"
+        );
+        useSharedConfig = Config.Bind(
+            CONFIG_SECTION_NETWORK,
+            nameof(UseSharedConfig),
+            true,
+            "Whether to use sorting scripts sent by the lobby host"
+        );
+        sharedConfigSizeLimit = Config.Bind(
+            CONFIG_SECTION_NETWORK,
+            nameof(SharedConfigSizeLimit),
+            10 * 1024 * 1024,
+            "Maximum size for shared configs that can be received (in bytes, default: 10MB)"
+        );
+
+        scriptPath.SettingChanged += ConfigChanged;
+        shareConfig.SettingChanged += ConfigChanged;
+
         Harmony = new Harmony(MyPluginInfo.PLUGIN_GUID);
         Logger.LogDebug("Patching...");
         Harmony.PatchAll();
@@ -74,14 +135,242 @@ public class LethalShipSort : BaseUnityPlugin
 #endif
 
         Logger.LogInfo($"{MyPluginInfo.PLUGIN_GUID} v{MyPluginInfo.PLUGIN_VERSION} has loaded!");
+        return;
+
+        void _verifyDeps()
+        {
+            Logger.LogDebug($"LuaCSharp loaded: {Assembly.GetAssembly(typeof(LuaState)).Location}");
+            Logger.LogDebug(
+                $"LuaCSharp Annotations loaded: {Assembly.GetAssembly(typeof(LuaObjectAttribute)).Location}"
+            );
+            Logger.LogDebug(
+                $"Microsoft.Bcl.TimeProvider loaded: {Assembly.GetAssembly(typeof(TimeProvider)).Location}"
+            );
+            Logger.LogDebug(
+                $"System.Runtime.CompilerServices.Unsafe loaded: {Assembly.GetAssembly(typeof(Unsafe)).Location}"
+            );
+        }
     }
 
-    public static GrabbableObject[] FilterItems(
+    internal FastBufferWriter CreateNetworkMessage()
+    {
+        Logger.LogDebug(
+            $">> {nameof(CreateNetworkMessage)} {nameof(cachedCompressedScript)}:{(cachedCompressedScript == null ? "null" : $"[{cachedCompressedScript.Length}]")} {nameof(cachedScript)}:{(cachedScript == null ? "null" : $"[{cachedScript.Length}]")}"
+        );
+        if (cachedCompressedScript == null)
+            return new FastBufferWriter(0, Allocator.Temp);
+        if (cachedScript == null)
+            throw new InvalidOperationException(
+                $"{nameof(cachedScript)} is null, but {nameof(cachedCompressedScript)} is not"
+            );
+        if (cachedCompressedScript.Length > int.MaxValue - 5)
+            throw new InsufficientMemoryException(
+                $"{nameof(cachedCompressedScript)} data too large"
+            );
+
+        var buf = cachedCompressedScript;
+        var writer = new FastBufferWriter((int)cachedCompressedScript.Length + 5, Allocator.Temp);
+        writer.WriteValue(cachedScript.Length);
+        writer.WriteBytes(buf.GetBuffer(), (int)cachedCompressedScript.Length);
+        return writer;
+    }
+
+    internal void ConfigChanged(object sender, EventArgs eventArgs)
+    {
+        try
+        {
+            Logger.LogDebug($">> {nameof(ConfigChanged)}");
+            var nm = NetworkManager.Singleton;
+            if (nm.IsServer)
+            {
+                try
+                {
+                    ReloadScript();
+                }
+                catch { }
+
+                nm.CustomMessagingManager.SendNamedMessageToAll(
+                    NETWORK_MESSAGE_NAME,
+                    CreateNetworkMessage(),
+                    NetworkDelivery.ReliableFragmentedSequenced
+                );
+            }
+        }
+        catch (Exception e)
+        {
+            Logger.LogError($"Error sharing script: {e}");
+        }
+    }
+
+    internal void ClearSharedScript()
+    {
+        Logger.LogDebug(
+            $">> {nameof(ClearSharedScript)} {nameof(cachedSharedScript)}:{(cachedSharedScript == null ? "null" : $"[{cachedSharedScript.Length}]")}"
+        );
+        cachedSharedScript = null;
+    }
+
+    internal void ReloadScript()
+    {
+        try
+        {
+            Logger.LogDebug($">> {nameof(ReloadScript)}");
+            using var file = File.Open(ScriptPath, FileMode.Open, FileAccess.Read);
+            if (file.Length > int.MaxValue)
+                throw new InsufficientMemoryException($"{nameof(file)} data too large");
+            var buf = new byte[(int)file.Length];
+            var read = file.Read(buf, 0, (int)file.Length);
+            if (read < file.Length)
+                throw new Exception(); // TODO: find better exception class
+            cachedScript = Encoding.UTF8.GetString(buf);
+
+            if (ShareConfig && NetworkManager.Singleton.IsServer)
+            {
+                cachedCompressedScript = new MemoryStream();
+                using (
+                    var compressor = new GZipStream(
+                        cachedCompressedScript,
+                        CompressionLevel.Optimal,
+                        true
+                    )
+                )
+                {
+                    file.Seek(0, SeekOrigin.Begin);
+                    file.CopyTo(compressor);
+                }
+                if (cachedCompressedScript.Length <= 0)
+                {
+                    Logger.LogWarning(
+                        $"Compressed script size is invalid: {cachedCompressedScript.Length} bytes"
+                    );
+                    cachedCompressedScript.Dispose();
+                    cachedCompressedScript = null;
+                }
+                else if (cachedCompressedScript.Length > MAX_SHARE)
+                {
+                    Chat.PrintWarning(
+                        $"{PREFIX}Your config script is too large to share: expected less than {Utils.BytesToString(MAX_SHARE)}, got {Utils.BytesToString((int)cachedCompressedScript.Length)}"
+                    );
+                    cachedCompressedScript.Dispose();
+                    cachedCompressedScript = null;
+                }
+                else
+                {
+                    Logger.LogInfo(
+                        $"Compressed local script to {cachedCompressedScript.Length} bytes"
+                    );
+                }
+            }
+            else
+            {
+                Logger.LogDebug("Config sharing disabled");
+                cachedCompressedScript?.Dispose();
+                cachedCompressedScript = null;
+            }
+        }
+        catch (Exception e)
+        {
+            Logger.LogError($"Error reloading script: {e}");
+            cachedScript = null;
+            cachedCompressedScript?.Dispose();
+            cachedCompressedScript = null;
+            throw;
+        }
+    }
+
+    internal static void NetworkMessageHandler(
+        ulong senderClientId,
+        FastBufferReader messagePayload
+    )
+    {
+        var payloadLength = messagePayload.Length - 8; // idk why but theres always 8 bytes more than sent so this should ignore them
+        Logger.LogDebug(
+            $">> {nameof(NetworkMessageHandler)}({nameof(senderClientId)}: {senderClientId}, {nameof(messagePayload)}: [{messagePayload.Length}]) {nameof(payloadLength)}:{payloadLength}"
+        );
+
+        if (senderClientId != 0)
+        {
+            Logger.LogError(
+                $"Expected network message from host (0), received from {senderClientId}"
+            );
+            return;
+        }
+        if (NetworkManager.Singleton.IsServer)
+            return;
+
+        var mod = Instance;
+        if (payloadLength <= 0)
+        {
+            mod.ClearSharedScript();
+            return;
+        }
+
+        if (payloadLength <= 4)
+        {
+            mod.ClearSharedScript();
+            Logger.LogWarning($"Not enough data to read shared config: {payloadLength} bytes");
+            return;
+        }
+
+        messagePayload.ReadValue(out int len);
+
+        if (len <= 0)
+        {
+            mod.ClearSharedScript();
+            Logger.LogWarning($"Shared config size invalid: {len} bytes");
+            return;
+        }
+
+        if (mod.SharedConfigSizeLimit <= 0)
+        {
+            Logger.LogDebug("Shared config receiving disabled");
+            return;
+        }
+        if (len > mod.SharedConfigSizeLimit)
+        {
+            mod.ClearSharedScript();
+            Chat.PrintWarning(
+                $"{PREFIX}Shared config exceeded size limit: {Utils.BytesToString(len)}"
+            );
+            return;
+        }
+
+        var arr = new byte[payloadLength - sizeof(int)];
+        messagePayload.ReadBytes(ref arr, arr.Length);
+
+        Logger.LogDebug($"Read {arr.Length} bytes (decodes to {len} bytes)");
+
+        using var compressed = new MemoryStream(arr);
+        using var decompressor = new GZipStream(compressed, CompressionMode.Decompress);
+        var decompressed = new byte[len];
+        var read = decompressor.Read(decompressed, 0, len);
+        if (read != len)
+        {
+            mod.ClearSharedScript();
+            Logger.LogWarning(
+                $"Shared config size does not match decompressed data size: expected {len} bytes, got {read} bytes"
+            );
+            return;
+        }
+        if (decompressor.ReadByte() != -1)
+        {
+            mod.ClearSharedScript();
+            Logger.LogWarning(
+                $"Shared config size does not match decompressed data size: expected {len} bytes, got more"
+            );
+            return;
+        }
+
+        mod.cachedSharedScript = Encoding.UTF8.GetString(decompressed);
+        Logger.LogDebug($"<< Loaded script ({len} bytes)");
+    }
+
+    public static IEnumerable<GrabbableObject> FilterItems(
         IEnumerable<GrabbableObject> items,
         PlayerControllerB localPlayer
     )
     {
-        return items.Where(i => FilterItem(i, localPlayer)).ToArray();
+        return items.Where(i => FilterItem(i, localPlayer));
     }
 
     public static bool FilterItem(GrabbableObject item, PlayerControllerB localPlayer)
@@ -91,7 +380,7 @@ public class LethalShipSort : BaseUnityPlugin
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public string Sort(
+    public string? Sort(
         GrabbableObject[] items,
         PlayerControllerB player,
         SelectableLevel currentLevel,
@@ -99,9 +388,18 @@ public class LethalShipSort : BaseUnityPlugin
         bool cruiser,
         bool lights,
         UnlockablesList unlockablesList,
+        IEnumerable<string> args,
         uint skipped = 0
     )
     {
+#if DEBUG
+        Logger.LogDebug(
+            $">> {nameof(Sort)}(...) {nameof(cachedScript)}:{(cachedScript == null ? "null" : $"[{cachedScript.Length}]")} {nameof(cachedSharedScript)}:{(cachedSharedScript == null ? "null" : $"[{cachedSharedScript.Length}]")}"
+        );
+#endif
+        var useSharedConfig = UseSharedConfig;
+        if (cachedScript == null && !useSharedConfig)
+            return null;
         return Sort(
             items,
             player,
@@ -110,7 +408,9 @@ public class LethalShipSort : BaseUnityPlugin
             cruiser,
             lights,
             unlockablesList,
-            ScriptPath,
+            useSharedConfig ? cachedSharedScript! : cachedScript!,
+            useSharedConfig ? "shared.lua" : ScriptPath,
+            args,
             skipped
         );
     }
@@ -123,7 +423,9 @@ public class LethalShipSort : BaseUnityPlugin
         bool cruiser,
         bool lights,
         UnlockablesList unlockablesList,
+        string scriptContent,
         string scriptPath,
+        IEnumerable<string> args,
         uint skipped = 0
     )
     {
@@ -135,12 +437,18 @@ public class LethalShipSort : BaseUnityPlugin
         lua.OpenMathLibrary();
         lua.OpenBitwiseLibrary();
 
+        lua.Environment["loadfile"] = new LuaValue();
+        lua.Environment["dofile"] = new LuaValue();
+
         lua.Environment[SortAPI.ENV_ABOUT] =
             $"{MyPluginInfo.PLUGIN_GUID} v{MyPluginInfo.PLUGIN_VERSION}";
         lua.Environment[SortAPI.ENV_SCRIPT] = Path.GetFileName(scriptPath);
         lua.Environment[SortAPI.ENV_VERSION_MAJOR] = VERSION.Major;
         lua.Environment[SortAPI.ENV_VERSION_MINOR] = VERSION.Minor;
         lua.Environment[SortAPI.ENV_VERSION_PATCH] = VERSION.Build;
+        lua.Environment[SortAPI.ENV_ARGS] = SortAPI.LuaTable(
+            args.Select(i => new LuaValue(i)).ToArray()
+        );
 
         lua.Environment[nameof(expect_version)] = new LuaFunction(expect_version);
 
@@ -177,7 +485,24 @@ public class LethalShipSort : BaseUnityPlugin
 
         var startTime = DateTime.UtcNow;
         var cancellationToken = new CancellationTokenSource();
-        var task = Task.Run(async () => await lua.DoFileAsync(scriptPath, cancellationToken.Token));
+
+        var task =
+#if DEBUG
+        EnableDebugMode(StartOfRound.Instance, GameNetworkManager.Instance)
+            ? Task.Run(async () =>
+            {
+                Logger.LogWarning("Debug mode enabled, running file from disk (not cache)");
+                return await lua.DoFileAsync(scriptPath, cancellationToken.Token);
+            })
+            :
+#endif
+            Task.Run(async () =>
+                await lua.DoStringAsync(
+                    scriptContent,
+                    Path.GetFileName(scriptPath),
+                    cancellationToken.Token
+                )
+            );
         try
         {
             var timeout = Instance.Timeout;

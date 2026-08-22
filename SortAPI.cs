@@ -10,6 +10,7 @@ public static class SortAPI
     public const string ENV_VERSION_MAJOR = "version_major";
     public const string ENV_VERSION_MINOR = "version_minor";
     public const string ENV_VERSION_PATCH = "version_patch";
+    public const string ENV_ARGS = "args";
 
     public const string ENV_ITEMS = "items";
     public const string ENV_MOON = "moon";
@@ -295,6 +296,14 @@ public static class SortAPI
         unlockablesTable[(int)UNLOCKABLE.Lights + 1] = lights;
 
         return unlockablesTable;
+    }
+
+    public static LuaTable LuaTable(LuaValue[] list)
+    {
+        var table = new LuaTable();
+        for (var i = 1; i <= list.Length; i++)
+            table[i] = list[i];
+        return table;
     }
 
     public static TRANSFORM ToTransform(PARENT parent, RELATIVE relative)
