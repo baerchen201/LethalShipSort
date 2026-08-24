@@ -221,7 +221,7 @@ public class LethalShipSort : BaseUnityPlugin
             var buf = new byte[(int)file.Length];
             var read = file.Read(buf, 0, (int)file.Length);
             if (read < file.Length)
-                throw new Exception(); // TODO: find better exception class
+                throw new EndOfStreamException();
             cachedScript = Encoding.UTF8.GetString(buf);
 
             if (ShareConfig && NetworkManager.Singleton.IsServer)
@@ -380,7 +380,7 @@ public class LethalShipSort : BaseUnityPlugin
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public string? Sort(
+    public bool Sort(
         GrabbableObject[] items,
         PlayerControllerB player,
         SelectableLevel currentLevel,
@@ -399,8 +399,8 @@ public class LethalShipSort : BaseUnityPlugin
 #endif
         var useSharedConfig = UseSharedConfig;
         if (cachedScript == null && !useSharedConfig)
-            return null;
-        return Sort(
+            return false;
+        Sort(
             items,
             player,
             currentLevel,
@@ -413,9 +413,10 @@ public class LethalShipSort : BaseUnityPlugin
             args,
             skipped
         );
+        return true;
     }
 
-    public static string Sort(
+    public static void Sort(
         GrabbableObject[] items,
         PlayerControllerB player,
         SelectableLevel currentLevel,
@@ -486,23 +487,21 @@ public class LethalShipSort : BaseUnityPlugin
         var startTime = DateTime.UtcNow;
         var cancellationToken = new CancellationTokenSource();
 
-        var task =
+        var task = Task.Run(async () =>
+        {
 #if DEBUG
-        EnableDebugMode(StartOfRound.Instance, GameNetworkManager.Instance)
-            ? Task.Run(async () =>
+            if (EnableDebugMode(StartOfRound.Instance, GameNetworkManager.Instance)) // no need to check if using shared config, EnableDebugMode doesn't allow that
             {
                 Logger.LogWarning("Debug mode enabled, running file from disk (not cache)");
                 return await lua.DoFileAsync(scriptPath, cancellationToken.Token);
-            })
-            :
+            }
 #endif
-            Task.Run(async () =>
-                await lua.DoStringAsync(
-                    scriptContent,
-                    Path.GetFileName(scriptPath),
-                    cancellationToken.Token
-                )
+            return await lua.DoStringAsync(
+                scriptContent,
+                Path.GetFileName(scriptPath),
+                cancellationToken.Token
             );
+        });
         try
         {
             var timeout = Instance.Timeout;
@@ -536,10 +535,6 @@ public class LethalShipSort : BaseUnityPlugin
             }
             else
                 task.Wait();
-#if DEBUG
-            skipTimeout:
-            ;
-#endif
         }
         catch (AggregateException e)
         {
@@ -548,16 +543,26 @@ public class LethalShipSort : BaseUnityPlugin
             throw;
         }
 
+#if DEBUG
+        skipTimeout:
+#endif
         var scriptEndTime = DateTime.UtcNow;
         var results = task.Result!;
 
         uint sorted = 0;
         uint failed = 0;
+        uint _skipped = 0;
 
         switch (results.Length)
         {
             case 0:
-                return "no items sorted"; // TODO: throw exception? should this be enforced?
+                // no error, an empty script shouldn't cause an error, but it also shouldn't seem like it worked
+#if DEBUG
+                Chat.PrintWarning("No items sorted (make sure your script returns its result)");
+#else
+                Chat.Print("No items sorted");
+#endif
+                break;
             case 1:
                 if (!results[0].TryRead<LuaTable>(out var result))
                     throw new ArgumentException(
@@ -571,7 +576,7 @@ public class LethalShipSort : BaseUnityPlugin
 #if DEBUG
                         Logger.LogDebug($"{i}: null");
 #endif
-                        skipped++;
+                        _skipped++;
                         continue;
                     }
 
@@ -591,9 +596,6 @@ public class LethalShipSort : BaseUnityPlugin
 #if DEBUG
                     Logger.LogDebug($"{i}: {pos}");
 #endif
-                    var item = items[i - 1];
-                    if (sorted++ <= 0)
-                        player.DropAllHeldItemsAndSyncNonexact();
 
                     var parent = GetTransform((SortAPI.TRANSFORM)pos.ParentTo, out _);
                     if (parent == null)
@@ -613,6 +615,10 @@ public class LethalShipSort : BaseUnityPlugin
                         failed++;
                         continue;
                     }
+
+                    var item = items[i - 1];
+                    if (sorted++ <= 0)
+                        player.DropAllHeldItemsAndSyncNonexact();
 
                     var position = parent.InverseTransformPoint(
                         (
@@ -672,7 +678,12 @@ public class LethalShipSort : BaseUnityPlugin
                     $"Script execution took {(scriptEndTime - startTime).ToReadableString()}, sorting took {(sortEndTime - scriptEndTime).ToReadableString()}"
                 );
 
-                return $"Sorted {sorted}/{items.Length} in {(sortEndTime - startTime).ToReadableString()}"; // TODO: include failed
+                Chat.Print(
+                    $"Sorted {sorted + _skipped}/{items.Length + skipped} in {(sortEndTime - startTime).ToReadableString()}"
+                );
+                if (failed > 0)
+                    Chat.PrintWarning($"{failed} items couldn't be sorted");
+                break;
             default:
                 throw new ArgumentException("expected single return value, got multiple");
         }
@@ -912,6 +923,8 @@ public class LethalShipSort : BaseUnityPlugin
         out bool transformDirection
     )
     {
+        // some transforms may exist even when they shouldn't (cupboard, bunkbeds, etc.)
+        // this is a quirk of the game and i don't feel like working around that
         transformDirection = false;
         switch (transform)
         {

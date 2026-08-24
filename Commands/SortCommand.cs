@@ -76,20 +76,21 @@ public class SortCommand : Command
 #endif
         try
         {
-            var ret = mod.Sort(
-                items,
-                sor.localPlayerController,
-                RoundManager.Instance.currentLevel,
-                TimeOfDay.Instance.daysUntilDeadline,
-                Object.FindAnyObjectByType<VehicleController>(FindObjectsInactive.Exclude) != null,
-                Object.FindFirstObjectByType<ShipLights>().areLightsOn,
-                sor.unlockablesList,
-                Args.Parse(args),
-                (uint)(l - items.Length)
-            );
-            if (ret == null)
+            if (
+                !mod.Sort(
+                    items,
+                    sor.localPlayerController,
+                    RoundManager.Instance.currentLevel,
+                    TimeOfDay.Instance.daysUntilDeadline,
+                    Object.FindAnyObjectByType<VehicleController>(FindObjectsInactive.Exclude)
+                        != null,
+                    Object.FindFirstObjectByType<ShipLights>().areLightsOn,
+                    sor.unlockablesList,
+                    Args.Parse(args),
+                    (uint)(l - items.Length)
+                )
+            )
                 throw new CommandException($"Script '{mod.ScriptPath}' could not be found");
-            Chat.Print(ret);
         }
         catch (ArgumentException e)
         {
