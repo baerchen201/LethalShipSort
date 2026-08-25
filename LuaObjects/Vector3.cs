@@ -62,4 +62,16 @@ public partial class Vector3(UnityEngine.Vector3 _vector3)
     {
         return vector3.ToString();
     }
+
+    public string? GetError()
+    {
+        if (!float.IsFinite(vector3.x))
+            return $"{nameof(vector3.x)} is {vector3.x}";
+        if (!float.IsFinite(vector3.y))
+            return $"{nameof(vector3.y)} is {vector3.y}";
+        if (!float.IsFinite(vector3.z))
+            return $"{nameof(vector3.z)} is {vector3.z}";
+
+        return null;
+    }
 }

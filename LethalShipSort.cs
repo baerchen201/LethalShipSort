@@ -620,6 +620,14 @@ public class LethalShipSort : BaseUnityPlugin
                     if (sorted++ <= 0)
                         player.DropAllHeldItemsAndSyncNonexact();
 
+                    var error = pos.Position.GetError();
+                    if (!string.IsNullOrWhiteSpace(error))
+                    {
+                        Logger.LogError($"Invalid position at #{i}: {error}");
+                        failed++;
+                        continue;
+                    }
+
                     var position = parent.InverseTransformPoint(
                         (
                             pos.RelativeTo != SortAPI.RELATIVE.Parent

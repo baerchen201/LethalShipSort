@@ -26,8 +26,6 @@ sell_sort = moon.id == 3 or remaining_days == 0
 print(script, "on", about)
 expect_version(4)
 
-
-
 cruiser_top = false
 for _, v in ipairs(cruiser_top_moons) do
     if type(v) == "string" then
