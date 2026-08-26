@@ -466,4 +466,6 @@ Debug tools include, but are not limited to:
 - Execute from disk: executes the script straight from disk, instead of the cache (no need to reload your script after every change)
 - Verbose logging: Prints every resulting item position in the log
 
+<sub>Some features mentioned above only activate in a singleplayer LAN lobby</sub>
+
 _There is currently no automated debug build, you'll have to compile the mod locally to use these._
