@@ -11,6 +11,8 @@ cupboard (or on the floor, if the cupboard is stored)
 
 For maximum consistency you can only use `/sort` while your ship is in orbit.
 
+**When there's 0 days remaining, or you're orbiting the company building, all scrap items will be aligned next to the sell desk sorted by value instead. (Knives, Shotguns and Zed dogs are hard-coded to be ignored)**
+
 ### Advanced usage (alternative/custom scripts)
 
 This mod is highly customizable by using [lua](https://www.lua.org/start.html) scripts to create item arrangements.
