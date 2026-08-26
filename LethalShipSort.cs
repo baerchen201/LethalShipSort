@@ -132,6 +132,7 @@ public class LethalShipSort : BaseUnityPlugin
         _ = new SortCommand();
 #if DEBUG
         _ = new SortHelperCommand();
+        _ = new GenMDTablesCommand();
 #endif
 
         Logger.LogInfo($"{MyPluginInfo.PLUGIN_GUID} v{MyPluginInfo.PLUGIN_VERSION} has loaded!");
@@ -483,6 +484,13 @@ public class LethalShipSort : BaseUnityPlugin
             lights,
             unlockablesList
         );
+
+#if DEBUG
+        foreach (var kvp in lua.Environment)
+        {
+            Logger.LogDebug($"(env) {kvp.Key}: {kvp.Value}");
+        }
+#endif
 
         var startTime = DateTime.UtcNow;
         var cancellationToken = new CancellationTokenSource();

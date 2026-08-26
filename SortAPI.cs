@@ -39,7 +39,7 @@ public static class SortAPI
     public const string VECTOR3_FORWARD = nameof(VECTOR3_FORWARD);
     public const string VECTOR3_BACK = nameof(VECTOR3_BACK);
 
-    public enum UNLOCKABLE
+    public enum UNLOCKABLE // make sure to update readme if changed
     {
         Cruiser = -1,
         OrangeSuit,
@@ -78,7 +78,7 @@ public static class SortAPI
         DogHouse,
     }
 
-    public enum TRANSFORM
+    public enum TRANSFORM // make sure to update readme if changed
     {
         Ship,
         World,
@@ -112,7 +112,7 @@ public static class SortAPI
         DogHouse = UNLOCKABLE.DogHouse,
     }
 
-    public enum PARENT
+    public enum PARENT // make sure to update readme if changed
     {
         Ship = TRANSFORM.Ship,
         Cupboard = TRANSFORM.Cupboard,
@@ -122,7 +122,7 @@ public static class SortAPI
         Microwave = TRANSFORM.Microwave,
     }
 
-    public enum RELATIVE
+    public enum RELATIVE // make sure to update readme if changed
     {
         Parent,
         World = TRANSFORM.World,
@@ -151,7 +151,7 @@ public static class SortAPI
         DogHouse = TRANSFORM.DogHouse,
     }
 
-    public enum ROTATE
+    public enum ROTATE // make sure to update readme if changed
     {
         Local, // local (relative_to)
         Parent, // local (parent_to)
@@ -202,9 +202,6 @@ public static class SortAPI
                 return beltBagItem.objectsInBag.Count;
 
             default:
-                if (item.insertedBattery != null)
-                    return item.insertedBattery.charge;
-
                 return new LuaValue();
         }
     }
@@ -287,7 +284,9 @@ public static class SortAPI
         for (var i = 0; i < unlockablesList.unlockables.Count; i++)
         {
             var unlockable = unlockablesList.unlockables[i];
+#if DEBUG
             LethalShipSort.Logger.LogDebug($"#{i}: {unlockable.unlockableName}");
+#endif
             unlockablesTable[i + 1] =
                 (unlockable.alreadyUnlocked || unlockable.hasBeenUnlockedByPlayer)
                 && !unlockable.inStorage;

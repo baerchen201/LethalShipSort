@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using ChatCommandAPI;
 using ChatCommandAPI.Utils;
@@ -99,6 +98,13 @@ public class SortCommand : Command
         catch (TimeoutException)
         {
             throw new CommandException("Script execution timed out");
+        }
+        catch (LuaCompileException e)
+        {
+            LethalShipSort.Logger.LogError(e);
+            throw new CommandException(
+                $"Script compilation error: {e.Message}\nCheck the logs for more details"
+            );
         }
         catch (LuaRuntimeException e)
         {
