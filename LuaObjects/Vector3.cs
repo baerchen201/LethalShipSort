@@ -51,6 +51,30 @@ public partial class Vector3(UnityEngine.Vector3 _vector3)
         return new Vector3(a.vector3 - b.vector3);
     }
 
+    [LuaMetamethod(LuaObjectMetamethod.Mul)]
+    public static Vector3 Mul(Vector3 a, float b)
+    {
+        return new Vector3(a.vector3 * b);
+    }
+
+    [LuaMetamethod(LuaObjectMetamethod.Div)]
+    public static Vector3 Div(Vector3 a, float b)
+    {
+        return new Vector3(a.vector3 / b);
+    }
+
+    [LuaMetamethod(LuaObjectMetamethod.Unm)]
+    public static Vector3 Unm(Vector3 a)
+    {
+        return new Vector3(-a.vector3);
+    }
+
+    [LuaMetamethod(LuaObjectMetamethod.Index)]
+    public static float Index(Vector3 a, int i)
+    {
+        return a.vector3[i];
+    }
+
     [LuaMember(nameof(vector3.normalized))]
     public Vector3 Normalized()
     {
@@ -61,6 +85,12 @@ public partial class Vector3(UnityEngine.Vector3 _vector3)
     public override string ToString()
     {
         return vector3.ToString();
+    }
+
+    [LuaMember(nameof(Equals))]
+    public bool Equals(Vector3 b)
+    {
+        return vector3 == b.vector3;
     }
 
     public string? GetError()

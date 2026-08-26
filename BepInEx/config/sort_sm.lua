@@ -10,6 +10,9 @@ CUPBOARD_SHELF_A_ITEMS = { "KnifeItem", "ShotgunItem", "ShovelItem" }
 CUPBOARD_SHELF_B_ITEMS = { "Key", "ShotgunShell", "BBFlashlight", "FlashlightItem" }
 CUPBOARD_SHELF_C_ITEMS = { "BeltBagItem", "StunGrenade", "WalkieTalkie", "SprayPaintItem" }
 CUPBOARD_SHELF_D_ITEMS = { "LockPickerItem", "TZPChemical", "WeedKillerItem", "PatcherGunItem" }
+EXCLUDE_TOOLS_FROM_SCRAP_LAYOUT = true -- leaves remaining tools unsorted (if false, any undefined tools will be sorted with the remaining scrap on the wall)
+
+
 
 print(script, "on", about)
 expect_version(4)
@@ -29,6 +32,9 @@ CIRCLE_RADIUS = 1
 circle = {}
 circle_c = 0
 
+CUPBOARD_MIN = Vector3(-1.6, 0.5, 0)
+CUPBOARD_MAX = Vector3(-0.6, 0.5, 0)
+
 CUPBOARD_TOP = 2.88;
 CUPBOARD_SHELF_A = 2.2;
 CUPBOARD_SHELF_B = 1.5;
@@ -47,10 +53,17 @@ cupboard_shelf_d = {}
 cupboard_shelf_d_c = 0
 
 function cupboard_sort(retval, cupboard_l, cupboard_c, cupboard_y)
-    -- TODO: IMPLEMENT
+    if not unlockables[UNLOCKABLE_CUPBOARD] then
+        return
+    end
+
+    margin = (CUPBOARD_MAX - CUPBOARD_MIN) / (cupboard_c + 1)
+
+    x = 0
     for _, v in pairs(cupboard_l) do
+        x = x + 1
         for _, i in ipairs(v) do
-            retval[i] = VECTOR3_ZERO
+            retval[i] = ItemPos(CUPBOARD_MIN + margin * x + Vector3(0, math.floor((items[i].index - 1) / 5) * 0.05, (items[i].index - 1) % 5 * 0.05 + cupboard_y)):with_parent(PARENT_CUPBOARD):with_rotation(-90)
         end
     end
 end
@@ -107,6 +120,7 @@ for i, v in pairs(items) do
             cupboard_shelf_d_c = cupboard_shelf_d_c + 1
         end
         table.insert(cupboard_shelf_d[v.name], i)
+    elseif not v.scrap and EXCLUDE_TOOLS_FROM_SCRAP_LAYOUT then
     elseif v.large then
         if layout_twohand[v.name] == nil then
             layout_twohand[v.name] = Vector3(-5.8 + layout_twohand_c * 0.7, 3.5, -5)
@@ -130,6 +144,7 @@ if circle_c <= 1 then
         end
     end
 elseif SUMMON_CIRCLE_STACK then
+    -- i was bored and this is pretty cool
     _circle = {}
     for _, v in pairs(circle) do
         table.insert(_circle, v)

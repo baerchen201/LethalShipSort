@@ -430,7 +430,7 @@ public class LethalShipSort : BaseUnityPlugin
         uint skipped = 0
     )
     {
-        var lua = LuaState.Create();
+        using var lua = LuaState.Create();
 
         lua.OpenBasicLibrary();
         lua.OpenStringLibrary();
@@ -687,7 +687,7 @@ public class LethalShipSort : BaseUnityPlugin
                 );
 
                 Chat.Print(
-                    $"Sorted {sorted + _skipped}/{items.Length + skipped} in {(sortEndTime - startTime).ToReadableString()}"
+                    $"Sorted {sorted}/{items.Length + skipped} in {(sortEndTime - startTime).ToReadableString()}"
                 );
                 if (failed > 0)
                     Chat.PrintWarning($"{failed} items couldn't be sorted");
