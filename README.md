@@ -6,7 +6,8 @@
 
 After installing the mod, simply type `/sort` in the game chat.
 
-This should sort all scrap on your ship into two piles (One- and Two-handed items) and put all your tools into the cupboard (or on the floor, if the cupboard is stored)
+This should sort all scrap on your ship into two piles (One- and Two-handed items) and put all your tools into the
+cupboard (or on the floor, if the cupboard is stored)
 
 For maximum consistency you can only use `/sort` while your ship is in orbit.
 
@@ -14,59 +15,78 @@ For maximum consistency you can only use `/sort` while your ship is in orbit.
 
 This mod is highly customizable by using [lua](https://www.lua.org/start.html) scripts to create item arrangements.
 
-The default arrangement described above is produced by the bundled `sort.lua` script, however it can be easily adjusted by changing the `ScriptPath` config value.
+The default arrangement described above is produced by the bundled `sort.lua` script, however it can be easily adjusted
+by changing the `ScriptPath` config value.
 
-**While scripts run in an isolated environment, there is always a risk when running arbitrary code. Only use scripts from trusted sources**
+**While scripts run in an isolated environment, there is always a risk when running arbitrary code. Only use scripts
+from trusted sources**
 
 The path is interpreted relative to the BepInEx/config directory in your profile or as an absolute path.
 
-**An alternative script is bundled with the mod: `sort_sm.lua` - a reimplementation of the [ScrapMagic](https://thunderstore.io/c/lethal-company/p/KyleTheScientist/Scrap_Magic/) sorting layout**
+**An alternative script is bundled with the mod: `sort_sm.lua` - a reimplementation of
+the [ScrapMagic](https://thunderstore.io/c/lethal-company/p/KyleTheScientist/Scrap_Magic/) sorting layout**
 
 ### Other config values
 
-- `General/Timeout`: To prevent freezes caused by bad scripts, a maximum execution time limit is set. If this expires, the script execution will be aborted and no items will be sorted.
-- `Networking/ShareConfig`: The script you selected will be shared with any clients also using the mod in your lobby. This results in less config conflicts.
-- `Networking/UseSharedConfig`: If you joined a lobby where the host has shared their script, this can be used to force your own script instead.
+- `General/Timeout`: To prevent freezes caused by bad scripts, a maximum execution time limit is set. If this expires,
+  the script execution will be aborted and no items will be sorted.
+- `Networking/ShareConfig`: The script you selected will be shared with any clients also using the mod in your lobby.
+  This results in less config conflicts.
+- `Networking/UseSharedConfig`: If you joined a lobby where the host has shared their script, this can be used to force
+  your own script instead.
 - `Networking/SharedConfigSizeLimit`: Prevents any abnormally large scripts sent by the host from being decompressed.
 
 ### Command arguments
 
 <sub>Command arguments are anything you type after the command: `/command argument1 argument2 ...`</sub>
 
-Any arguments you pass to the `/sort` command are passed to the script, except for `reload`, which reloads the currently selected script from disk.
+Any arguments you pass to the `/sort` command are passed to the script, except for `reload`, which reloads the currently
+selected script from disk.
 
 ### Common errors
 
-- `Script '...' could not be found`: The script file referenced in the config is not available. Make sure the path is valid.
-- `Script execution timed out`: The script took too long to execute, increase the `General/Timeout` config value if this happens too often.
+- `Script '...' could not be found`: The script file referenced in the config is not available. Make sure the path is
+  valid.
+- `Script execution timed out`: The script took too long to execute, increase the `General/Timeout` config value if this
+  happens too often.
 - `Version conflict (...)`: The script was created for a different version of the mod, things may break.
-If it works fine, you can remove the `expect_version(...)` instruction in the script to remove the warning.
-- `... items couldn't be sorted`: Some positions were invalid, contact the creator about this and make sure to provide all error messages found in the game logs.
-- `Script error: ...`: The script failed to execute, contact the creator about this and make sure to provide the full error message found in the game logs.
-- `Script compilation error: ...`: The script file contains an error, contact the creator about this and make sure to provide the full error message found in the game logs.
-- `Script result invalid: ...`: The script exited abnormally, contact the creator about this and make sure to provide the full error message found in the game logs.
+  If it works fine, you can remove the `expect_version(...)` instruction in the script to remove the warning.
+- `... items couldn't be sorted`: Some positions were invalid, contact the creator about this and make sure to provide
+  all error messages found in the game logs.
+- `Script error: ...`: The script failed to execute, contact the creator about this and make sure to provide the full
+  error message found in the game logs.
+- `Script compilation error: ...`: The script file contains an error, contact the creator about this and make sure to
+  provide the full error message found in the game logs.
+- `Script result invalid: ...`: The script exited abnormally, contact the creator about this and make sure to provide
+  the full error message found in the game logs.
 
 ## Documentation for script developers
 
-<sub>When developing scripts, it is recommended to use a debug build of the runtime, as it provides useful tools, warnings and log messages for script development. See [below](#debug-build) for more information</sub>
+<sub>When developing scripts, it is recommended to use a debug build of the runtime, as it provides useful tools,
+warnings and log messages for script development. See [below](#debug-build) for more information</sub>
 
 ### Concept
 
-A sorting script receives a [table of items](#globals) and returns a [table of positions](#return-values), both using arbitrary indexes for item identification.
+A sorting script receives a [table of items](#globals) and returns a [table of positions](#return-values), both using
+arbitrary indexes for item identification.
 
 The script should use its code to generate those item positions.
 
 #### Return values
 
-The script should return a table containing [ItemPos](#itempos) or [Vector3](#vector3) objects at the indices of their respective items.
+The script should return a table containing [ItemPos](#itempos) or [Vector3](#vector3) objects at the indices of their
+respective items.
 
 If an item has no assigned position (`nil`), the item will not be moved.
 
 ### Lua environment
 
-This mod uses [Lua-CSharp](https://github.com/nuskey8/Lua-CSharp/tree/v0.5.6#compatibility) (v0.5.6 for Lua 5.2) to run scripts, see its compatibility section for more information.
+This mod uses [Lua-CSharp](https://github.com/nuskey8/Lua-CSharp/tree/v0.5.6#compatibility) (v0.5.6 for Lua 5.2) to run
+scripts, see its compatibility section for more information.
 
-Only the [basic](https://www.lua.org/manual/5.2/manual.html#6.1), [string](https://www.lua.org/manual/5.2/manual.html#6.4), [table](https://www.lua.org/manual/5.2/manual.html#6.5), [math](https://www.lua.org/manual/5.2/manual.html#6.6) and [bitwise](https://www.lua.org/manual/5.2/manual.html#6.7) libraries are loaded.
+Only
+the [basic](https://www.lua.org/manual/5.2/manual.html#6.1), [string](https://www.lua.org/manual/5.2/manual.html#6.4), [table](https://www.lua.org/manual/5.2/manual.html#6.5), [math](https://www.lua.org/manual/5.2/manual.html#6.6)
+and [bitwise](https://www.lua.org/manual/5.2/manual.html#6.7) libraries are loaded.
 
 The `loadfile` and `dofile` functions are removed.
 
@@ -75,7 +95,8 @@ The `loadfile` and `dofile` functions are removed.
 - `items` (table): A list of [item definitions](#item-definitions)
 - `moon` (table): A table containing information about the current moon (see [moon definition](#moon-definitions))
 - `remaining_days` (int): The amount of days remaining in the current quota
-- `unlockables` (table): A table of booleans representing different unlockables on the ship and their availability (use the [Unlockables enum](#unlockables) to index this)
+- `unlockables` (table): A table of booleans representing different unlockables on the ship and their availability (use
+  the [Unlockables enum](#unlockables) to index this)
 - `args` (table): A list containing the user-provided command arguments
 - `about` (string): A short description of the current runtime (`baer1.ShipSort vX.X.X`)
 - `script` (string): The file name of the current script (not the full path)
@@ -87,11 +108,13 @@ The `loadfile` and `dofile` functions are removed.
 
 Each item definition is a table with the following values:
 
-- `name` (string): The item object name, without the `(Clone)` added by Unity (Shovel: `ShovelItem`, Bottles: `BinFullOfBottles`, see [below](#vanilla-items))
+- `name` (string): The item object name, without the `(Clone)` added by Unity (Shovel: `ShovelItem`, Bottles:
+  `BinFullOfBottles`, see [below](#vanilla-items))
 - `type` (string): The item script type (Zap Gun: `PatcherTool`, _Generic scrap_: `PhysicsProp`, etc.)
 - `scrap` (bool): Whether the item is scrap (not a tool)
 - `large` (bool): Whether the item is two-handed
-- `arg` (object): Misc. value related to the item (amount of shells in a shotgun, whether a radar booster is enabled, see `SortAPI.ItemArg` for more details)
+- `arg` (object): Misc. value related to the item (amount of shells in a shotgun, whether a radar booster is enabled,
+  see `SortAPI.ItemArg` for more details)
 - `index` (int): 1-based index of the item based on `name`
 - `count` (int): total amount of items with matching `name`
 
@@ -356,6 +379,7 @@ Some enums are made available as global constants (Enum.Value would become ENUM_
 Each Vector3 contains `x`, `y` and `z` values. You can create one using `Vector3(float x, float y, float z)`
 
 The following operations are supported:
+
 - `Vector3:x`
 - `Vector3:y`
 - `Vector3:z`
@@ -389,7 +413,8 @@ It is made up of the following fields:
 
 - `position` ([Vector3](#vector3)): The coordinates where to put the item
 - `parent_to` ([PARENT](#parent-objects)) [DEFAULT: PARENT_SHIP]: The transform to which to parent the item
-- `relative_to` ([RELATIVE](#relative-objects)) [DEFAULT: RELATIVE_PARENT]: The transform relative to which the position is calculated
+- `relative_to` ([RELATIVE](#relative-objects)) [DEFAULT: RELATIVE_PARENT]: The transform relative to which the position
+  is calculated
 - `rotation` (int) [DEFAULT: 0]: The rotation of the item around the Y axis (always limited to 0-360)
 - `rotation_mode` ([ROTATE](#rotation-modes)) [DEFAULT: ROTATE_LOCAL]: How to adjust the rotation angle
 
@@ -405,9 +430,11 @@ It is made up of the following fields:
 
 - `position` ([Vector3](#vector3)): The raycast origin
 - `direction` ([Vector3](#vector3)): The direction to cast the raycast in
-- `relative_to` ([TRANSFORM](#transform-objects)): The transform relative to which the position and direction are calculated
+- `relative_to` ([TRANSFORM](#transform-objects)): The transform relative to which the position and direction are
+  calculated
 
-While a `RaycastPos` can be created manually using `RaycastPos(Vector3 position, Vector3 direction, int relative_to)`, unless you are using all three options you should just use the [`raycast` function](#raycast) directly.
+While a `RaycastPos` can be created manually using `RaycastPos(Vector3 position, Vector3 direction, int relative_to)`,
+unless you are using all three options you should just use the [`raycast` function](#raycast) directly.
 
 ### Utility functions
 
@@ -419,16 +446,19 @@ The `print` function outputs the provided arguments to the game log (separated b
 
 #### Error
 
-The default lua [`error` function](https://www.lua.org/manual/5.2/manual.html#pdf-error) is available and can be used to abort script execution.
+The default lua [`error` function](https://www.lua.org/manual/5.2/manual.html#pdf-error) is available and can be used to
+abort script execution.
 
 #### Expect version
 
 `void expect_version(int major)`
 `void expect_version(int major, int min_minor)`
 
-The `expect_version` function verifies if the script is compatible with the runtime version and informs the user about any incompatibilities.
+The `expect_version` function verifies if the script is compatible with the runtime version and informs the user about
+any incompatibilities.
 
-The runtime should follow semantic versioning, where the major version should match and the minor version should match or be greater.
+The runtime should follow semantic versioning, where the major version should match and the minor version should match
+or be greater.
 
 **This function can only be used once**
 
@@ -463,7 +493,8 @@ Therefore, when developing a script, consider using a debug build of the mod.
 Debug tools include, but are not limited to:
 
 - Sort helper: displays the coordinates where you dropped an item (see `/sorthelper`)
-- Execute from disk: executes the script straight from disk, instead of the cache (no need to reload your script after every change)
+- Execute from disk: executes the script straight from disk, instead of the cache (no need to reload your script after
+  every change)
 - Verbose logging: Prints every resulting item position in the log
 
 <sub>Some features mentioned above only activate in a singleplayer LAN lobby</sub>

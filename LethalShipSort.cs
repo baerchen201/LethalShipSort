@@ -239,6 +239,7 @@ public class LethalShipSort : BaseUnityPlugin
                     file.Seek(0, SeekOrigin.Begin);
                     file.CopyTo(compressor);
                 }
+
                 if (cachedCompressedScript.Length <= 0)
                 {
                     Logger.LogWarning(
@@ -296,6 +297,7 @@ public class LethalShipSort : BaseUnityPlugin
             );
             return;
         }
+
         if (NetworkManager.Singleton.IsServer)
             return;
 
@@ -327,6 +329,7 @@ public class LethalShipSort : BaseUnityPlugin
             Logger.LogDebug("Shared config receiving disabled");
             return;
         }
+
         if (len > mod.SharedConfigSizeLimit)
         {
             mod.ClearSharedScript();
@@ -353,6 +356,7 @@ public class LethalShipSort : BaseUnityPlugin
             );
             return;
         }
+
         if (decompressor.ReadByte() != -1)
         {
             mod.ClearSharedScript();
@@ -487,9 +491,7 @@ public class LethalShipSort : BaseUnityPlugin
 
 #if DEBUG
         foreach (var kvp in lua.Environment)
-        {
             Logger.LogDebug($"(env) {kvp.Key}: {kvp.Value}");
-        }
 #endif
 
         var startTime = DateTime.UtcNow;
@@ -525,10 +527,12 @@ public class LethalShipSort : BaseUnityPlugin
                     cancellationToken.Cancel();
                     throw new TimeoutException();
                 }
+
                 Chat.PrintWarning(
                     $"Script execution time passed default timeout ({defaultTimeout} seconds), consider optimizing it"
                 );
             }
+
             goto skipTimeout;
 
             timeout:
@@ -542,7 +546,9 @@ public class LethalShipSort : BaseUnityPlugin
                 }
             }
             else
+            {
                 task.Wait();
+            }
         }
         catch (AggregateException e)
         {
@@ -819,6 +825,7 @@ public class LethalShipSort : BaseUnityPlugin
             );
             goto nohit;
         }
+
         var origin = transform.TransformPoint(pos.Position);
         var direction = transformDirection
             ? transform.TransformDirection(pos.Direction)

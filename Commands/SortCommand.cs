@@ -33,7 +33,6 @@ public class SortCommand : Command
         var mod = LethalShipSort.Instance;
 
         if (!string.IsNullOrWhiteSpace(args))
-        {
             if (args.Trim().ToLowerInvariant() == "reload")
             {
                 try
@@ -45,18 +44,15 @@ public class SortCommand : Command
                 {
                     var nm = NetworkManager.Singleton;
                     if (nm.IsServer)
-                    {
                         nm.CustomMessagingManager.SendNamedMessageToAll(
                             LethalShipSort.NETWORK_MESSAGE_NAME,
                             mod.CreateNetworkMessage(),
                             NetworkDelivery.ReliableFragmentedSequenced
                         );
-                    }
                 }
 
                 return;
             }
-        }
 
         var items = Object.FindObjectsByType<GrabbableObject>(
             FindObjectsInactive.Exclude,
