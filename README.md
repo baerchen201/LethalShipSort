@@ -9,9 +9,9 @@ After installing the mod, simply type `/sort` in the game chat.
 This should sort all scrap on your ship into two piles (One- and Two-handed items) and put all your tools into the
 cupboard (or on the floor, if the cupboard is stored)
 
-For maximum consistency you can only use `/sort` while your ship is in orbit.
+Some tools are automatically put on the cruiser (if you have one).
 
-**When there's 0 days remaining, or you're orbiting the company building, all scrap items will be aligned next to the sell desk sorted by value instead. (Knives, Shotguns and Zed dogs are hard-coded to be ignored)**
+For maximum consistency you can only use `/sort` while your ship is in orbit.
 
 ### Advanced usage (alternative/custom scripts)
 
@@ -450,7 +450,8 @@ The `print` function outputs the provided arguments to the game log (separated b
 
 `void error(...)`
 
-The `error` function outputs the provided arguments to the chat (separated by spaces) and aborts further script execution
+The `error` function outputs the provided arguments to the chat (separated by spaces) and aborts further script
+execution
 
 #### Expect version
 
