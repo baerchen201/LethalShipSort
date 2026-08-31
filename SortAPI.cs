@@ -300,8 +300,8 @@ public static class SortAPI
     public static LuaTable LuaTable(LuaValue[] list)
     {
         var table = new LuaTable();
-        for (var i = 1; i <= list.Length; i++)
-            table[i] = list[i];
+        for (var i = 0; i < list.Length; i++)
+            table[i + 1] = list[i];
         return table;
     }
 
