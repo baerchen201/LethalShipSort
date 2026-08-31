@@ -448,8 +448,9 @@ The `print` function outputs the provided arguments to the game log (separated b
 
 #### Error
 
-The default lua [`error` function](https://www.lua.org/manual/5.2/manual.html#pdf-error) is available and can be used to
-abort script execution.
+`void error(...)`
+
+The `error` function outputs the provided arguments to the chat (separated by spaces) and aborts further script execution
 
 #### Expect version
 

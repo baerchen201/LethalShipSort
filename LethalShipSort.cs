@@ -459,6 +459,7 @@ public class LethalShipSort : BaseUnityPlugin
         lua.Environment[nameof(expect_version)] = new LuaFunction(expect_version);
 
         lua.Environment[nameof(print)] = new LuaFunction(print);
+        lua.Environment[nameof(error)] = new LuaFunction(error);
         lua.Environment[nameof(raycast)] = new LuaFunction(raycast);
         lua.Environment[nameof(transform)] = new LuaFunction(transform);
         lua.Environment[nameof(Vector3)] = new Vector3(UnityEngine.Vector3.zero);
@@ -768,6 +769,19 @@ public class LethalShipSort : BaseUnityPlugin
             sb.Append($" {arg.ToString()}");
         Logger.LogInfo($"(Script){sb}");
         return new ValueTask<int>(0);
+    }
+
+    private static ValueTask<int> error(
+        LuaFunctionExecutionContext ctx,
+        CancellationToken cancellationToken
+    )
+    {
+        if (ctx.ArgumentCount <= 0)
+            throw new Exception();
+        var sb = new StringBuilder();
+        foreach (var arg in ctx.Arguments)
+            sb.Append($" {arg.ToString()}");
+        throw new Exception(sb.ToString());
     }
 
     private static ValueTask<int> raycast(

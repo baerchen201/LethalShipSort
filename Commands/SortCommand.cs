@@ -99,7 +99,7 @@ public class SortCommand : Command
         {
             LethalShipSort.Logger.LogError(e);
             throw new CommandException(
-                $"Script compilation error: {e.Message}\nCheck the logs for more details"
+                $"Script compilation error: {e.Message.Trim()}\nCheck the logs for more details"
             );
         }
         catch (LuaRuntimeException e)
@@ -107,7 +107,7 @@ public class SortCommand : Command
             LethalShipSort.Logger.LogDebug(e);
             LethalShipSort.Logger.LogError(e.LuaTraceback);
             throw new CommandException(
-                $"Script error: {e.Message}\nCheck the logs for more details"
+                $"Script error: {e.Message.Trim()}\nCheck the logs for more details"
             );
         }
 #if DEBUG
