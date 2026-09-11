@@ -46,8 +46,7 @@ the [ScrapMagic](https://thunderstore.io/c/lethal-company/p/KyleTheScientist/Scr
 
 <sub>Command arguments are anything you type after the command: `/command argument1 argument2 ...`</sub>
 
-Any arguments you pass to the `/sort` command are passed to the script, except for `reload`, which reloads the currently
-selected script from disk.
+Any arguments you pass to the `/sort` command are passed to the script.
 
 ### Common errors
 
@@ -65,6 +64,13 @@ selected script from disk.
   provide the full error message found in the game logs.
 - `Script result invalid: ...`: The script exited abnormally, contact the creator about this and make sure to provide
   the full error message found in the game logs.
+
+### Sub-commands
+
+The following sub-commands are available:
+
+- `/sort-reload` - Reloads your selected script from disk
+- `/sort-status` - Displays some information about the mod (such as the current script and information about the previous sort)
 
 ## Documentation for script developers
 
