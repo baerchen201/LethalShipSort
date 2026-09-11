@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
+using ChatCommandAPI;
 using ChatCommandAPI.Utils;
 using GameNetcodeStuff;
 using HarmonyLib;
@@ -52,6 +53,9 @@ public class LethalShipSort : BaseUnityPlugin
 
     private ConfigEntry<uint> timeout = null!;
     public int Timeout => (int)Math.Min(int.MaxValue, timeout.Value);
+
+    private ConfigEntry<bool> autoSort = null!;
+    public bool AutoSort => autoSort.Value;
 
     private ConfigEntry<bool> shareConfig = null!;
     public bool ShareConfig => shareConfig.Value;
@@ -101,6 +105,12 @@ public class LethalShipSort : BaseUnityPlugin
             5U,
             "The maximum execution time for the sorting script in seconds (prevents freezing, 0 to disable [NOT RECOMMENDED])"
         );
+        autoSort = Config.Bind(
+            CONFIG_SECTION_GENERAL,
+            nameof(AutoSort),
+            false,
+            "[HOST-ONLY] Automatically sorts all items before the ship lands and after it takes off"
+        );
 
         shareConfig = Config.Bind(
             CONFIG_SECTION_NETWORK,
@@ -130,6 +140,8 @@ public class LethalShipSort : BaseUnityPlugin
         Logger.LogDebug("Finished patching!");
 
         _ = new SortCommand();
+        _ = new SortReloadCommand();
+        _ = new SortStatusCommand();
 #if DEBUG
         _ = new SortHelperCommand();
         _ = new GenMDTablesCommand();
@@ -384,41 +396,100 @@ public class LethalShipSort : BaseUnityPlugin
             || item is { isHeld: false, isPocketed: false }; // TODO: figure out something for belt bag (potentially add a patch that sets isPocketed on pickup/drop)
     }
 
+    internal static void TryAutoSort(StartOfRound sor)
+    {
+        var mod = Instance;
+        if (!mod.AutoSort)
+            return;
+        try
+        {
+            mod.Sort(sor, [], true);
+        }
+        catch (CommandException e)
+        {
+            Chat.PrintWarning($"Autosort failed: {e.Message}");
+        }
+        catch (Exception e)
+        {
+            Chat.PrintWarning($"Autosort failed, check the logs for more details");
+            Logger.LogError(e);
+        }
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool Sort(
-        GrabbableObject[] items,
-        PlayerControllerB player,
-        SelectableLevel currentLevel,
-        int daysUntilDeadline,
-        bool cruiser,
-        bool lights,
-        UnlockablesList unlockablesList,
-        IEnumerable<string> args,
-        uint skipped = 0
-    )
+    public bool Sort(StartOfRound sor, IEnumerable<string> args, bool isAutoSort = false)
     {
 #if DEBUG
         Logger.LogDebug(
             $">> {nameof(Sort)}(...) {nameof(cachedScript)}:{(cachedScript == null ? "null" : $"[{cachedScript.Length}]")} {nameof(cachedSharedScript)}:{(cachedSharedScript == null ? "null" : $"[{cachedSharedScript.Length}]")}"
         );
 #endif
-        var useSharedConfig = UseSharedConfig;
-        if (cachedScript == null && !useSharedConfig)
+        if (isAutoSort && !sor.IsServer)
+            return true;
+
+#if DEBUG
+        if (!sor.inShipPhase && !isAutoSort && !EnableDebugMode(sor, GameNetworkManager.Instance))
+#else
+        if (!sor.inShipPhase && !isAutoSort)
+#endif
+            throw new ShipIsLandedException();
+
+        var mod = Instance;
+        var items = FindObjectsByType<GrabbableObject>(
+                FindObjectsInactive.Exclude,
+                FindObjectsSortMode.InstanceID
+            )
+            .Where(i => i.IsSpawned)
+            .ToArray();
+        var l = items.Length;
+        items = FilterItems(items, sor.localPlayerController).ToArray();
+        if (items.Length <= 0)
             return false;
-        Sort(
-            items,
-            player,
-            currentLevel,
-            daysUntilDeadline,
-            cruiser,
-            lights,
-            unlockablesList,
-            useSharedConfig ? cachedSharedScript! : cachedScript!,
-            useSharedConfig ? "shared.lua" : ScriptPath,
-            args,
-            skipped
-        );
-        return true;
+
+        try
+        {
+            var useSharedConfig = UseSharedConfig;
+            if (cachedScript == null && !useSharedConfig)
+                throw new CommandException($"Script '{ScriptPath}' could not be found");
+            Sort(
+                items,
+                sor.localPlayerController,
+                RoundManager.Instance.currentLevel,
+                TimeOfDay.Instance.daysUntilDeadline,
+                FindAnyObjectByType<VehicleController>(FindObjectsInactive.Exclude) != null,
+                FindFirstObjectByType<ShipLights>().areLightsOn,
+                sor.unlockablesList,
+                useSharedConfig ? cachedSharedScript! : cachedScript!,
+                useSharedConfig ? "shared.lua" : ScriptPath,
+                args,
+                (uint)(l - items.Length),
+                isAutoSort
+            );
+            return true;
+        }
+        catch (ArgumentException e)
+        {
+            throw new CommandException($"Script result invalid: {e.Message}");
+        }
+        catch (TimeoutException)
+        {
+            throw new CommandException("Script execution timed out");
+        }
+        catch (LuaCompileException e)
+        {
+            Logger.LogError(e);
+            throw new CommandException(
+                $"Script compilation error: {e.Message.Trim()}\nCheck the logs for more details"
+            );
+        }
+        catch (LuaRuntimeException e)
+        {
+            Logger.LogDebug(e);
+            Logger.LogError(e.LuaTraceback);
+            throw new CommandException(
+                $"Script error: {e.Message.Trim()}\nCheck the logs for more details"
+            );
+        }
     }
 
     public static void Sort(
@@ -432,9 +503,12 @@ public class LethalShipSort : BaseUnityPlugin
         string scriptContent,
         string scriptPath,
         IEnumerable<string> args,
-        uint skipped = 0
+        uint skipped = 0,
+        bool isAutoSort = false
     )
     {
+        var scriptName = Path.GetFileName(scriptPath);
+
         using var lua = LuaState.Create();
 
         lua.OpenBasicLibrary();
@@ -448,7 +522,7 @@ public class LethalShipSort : BaseUnityPlugin
 
         lua.Environment[SortAPI.ENV_ABOUT] =
             $"{MyPluginInfo.PLUGIN_GUID} v{MyPluginInfo.PLUGIN_VERSION}";
-        lua.Environment[SortAPI.ENV_SCRIPT] = Path.GetFileName(scriptPath);
+        lua.Environment[SortAPI.ENV_SCRIPT] = scriptName;
         lua.Environment[SortAPI.ENV_VERSION_MAJOR] = VERSION.Major;
         lua.Environment[SortAPI.ENV_VERSION_MINOR] = VERSION.Minor;
         lua.Environment[SortAPI.ENV_VERSION_PATCH] = VERSION.Build;
@@ -507,11 +581,7 @@ public class LethalShipSort : BaseUnityPlugin
                 return await lua.DoFileAsync(scriptPath, cancellationToken.Token);
             }
 #endif
-            return await lua.DoStringAsync(
-                scriptContent,
-                Path.GetFileName(scriptPath),
-                cancellationToken.Token
-            );
+            return await lua.DoStringAsync(scriptContent, scriptName, cancellationToken.Token);
         });
         try
         {
@@ -706,6 +776,15 @@ public class LethalShipSort : BaseUnityPlugin
                 );
                 if (failed > 0)
                     Chat.PrintWarning($"{failed} items couldn't be sorted");
+
+                SortStatusCommand.PrevSort = new SortStatusCommand.PreviousSort(
+                    DateTime.UtcNow,
+                    sortEndTime - startTime,
+                    sorted,
+                    (uint)items.Length + skipped,
+                    isAutoSort,
+                    scriptName
+                );
                 break;
             default:
                 throw new ArgumentException("expected single return value, got multiple");

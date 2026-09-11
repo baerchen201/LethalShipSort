@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Reflection.Emit;
 using HarmonyLib;
 using LethalModUtils;
+using LethalShipSort.Commands;
 using Unity.Netcode;
 
 namespace LethalShipSort.Patches;
@@ -46,5 +47,6 @@ internal static class NetworkManager_Initialize
         );
         LethalShipSort.Logger.LogInfo("Registered network message handler");
         mod.ReloadScript();
+        SortStatusCommand.PrevSort = null;
     }
 }

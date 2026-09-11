@@ -32,6 +32,10 @@ the [ScrapMagic](https://thunderstore.io/c/lethal-company/p/KyleTheScientist/Scr
 
 - `General/Timeout`: To prevent freezes caused by bad scripts, a maximum execution time limit is set. If this expires,
   the script execution will be aborted and no items will be sorted.
+- `General/AutoSort`: When you're hosting a lobby, the mod will automatically sort all items when
+  - a save is loaded
+  - the ship leaves orbit
+  - the ship returns to orbit
 - `Networking/ShareConfig`: The script you selected will be shared with any clients also using the mod in your lobby.
   This results in less config conflicts.
 - `Networking/UseSharedConfig`: If you joined a lobby where the host has shared their script, this can be used to force
