@@ -513,4 +513,4 @@ Debug tools include, but are not limited to:
 
 <sub>Some features mentioned above only activate in a singleplayer LAN lobby</sub>
 
-_There is currently no automated debug build, you'll have to compile the mod locally to use these._
+You can obtain a debug build from the [latest GitHub release](https://github.com/baerchen201/LethalShipSort/releases/latest) (`release-debug.zip`).
