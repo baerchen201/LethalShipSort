@@ -1,5 +1,6 @@
 using System.Collections;
 using HarmonyLib;
+using UnityEngine;
 
 namespace LethalShipSort.Patches;
 
@@ -13,7 +14,7 @@ internal static class RoundManager_DespawnPropsAtEndOfRound
 
     private static IEnumerator DelayedAutoSort(StartOfRound __instance)
     {
-        yield return null;
+        yield return new WaitForSecondsRealtime(2);
         LethalShipSort.TryAutoSort(__instance);
     }
 }
