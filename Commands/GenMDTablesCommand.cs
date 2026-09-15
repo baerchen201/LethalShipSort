@@ -36,6 +36,7 @@ public class GenMDTablesCommand : Command
                     .FindObjectsOfTypeAll<GrabbableObject>()
                     .Where(i => !objects.Contains(i))
                     .ToArray(),
+                ("Display name", i => i.itemProperties?.itemName ?? "_unknown_"),
                 ("Name", i => NoneIfEmpty($"`{SortAPI.ItemName(i)}`")),
                 ("Type", i => NoneIfEmpty($"`{i.GetType().Name}`")),
                 ("Scrap", i => SortAPI.ItemScrap(i).ToString()),
