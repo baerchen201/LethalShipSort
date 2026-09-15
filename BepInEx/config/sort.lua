@@ -362,7 +362,7 @@ for i, v in pairs(items) do
     elseif v.name == "Key" then
         retval[i] = first_x_on_cruiser(v, 4, Vector3(CRUISER_LEFT, CRUISER_MIDDLE, -0.7), Vector3(-0.1, CRUISER_ABOVE, -3.7), -90, cupboard_or(Vector3(-0.3, 0.6, CUPBOARD_MIDDLE_2), Vector3(8.6, 2, -6.6)))
     elseif v.name == "ShotgunShell" then
-        retval[i] = first_x_on_cruiser(v, 2, Vector3(CRUISER_LEFT, CRUISER_TOP, -0.7), Vector3(0.9, CRUISER_ABOVE, -3.7), -90, Vector3(8.75, 2, -6.05))
+        retval[i] = first_x_on_cruiser(v, 2, Vector3(CRUISER_LEFT, CRUISER_TOP, -0.7), Vector3(0.9, CRUISER_ABOVE, -3.7), -90, Vector3(8.75, SHIP_LEVER_LEFT, -6.05))
 
     elseif v.name == "RadarBoosterDevice" then
         retval[i] = first_x_on_cruiser_where(v, 1, (function(item)
