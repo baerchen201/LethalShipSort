@@ -16,6 +16,7 @@ BLACKLIST = {}
 TOOLS = { "KnifeItem", "ShotgunItem" }
 
 -- Fancy mode - Sorts the scrap on the wall in a layout similar to ScrapMagic
+-- If disabled, scrap is put in two piles (one- and two-handed items respectively)
 fancy_mode = true
 
 -- Disable cruiser:

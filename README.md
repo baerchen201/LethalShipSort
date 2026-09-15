@@ -6,7 +6,7 @@
 
 After installing the mod, simply type `/sort` in the game chat.
 
-This should sort all scrap on your ship into two piles (One- and Two-handed items) and put all your tools into the
+This should sort all scrap on your ship onto the wall and put all your tools into the
 cupboard (or on the floor, if the cupboard is stored)
 
 Some tools are automatically put on the cruiser (if you have one).
@@ -20,13 +20,16 @@ This mod is highly customizable by using [lua](https://www.lua.org/start.html) s
 The default arrangement described above is produced by the bundled `sort.lua` script, however it can be easily adjusted
 by changing the `ScriptPath` config value.
 
+**An alternative script is bundled with the mod: `sort_sm.lua` - a reimplementation of
+the [ScrapMagic](https://thunderstore.io/c/lethal-company/p/KyleTheScientist/Scrap_Magic/) sorting feature**
+
+The bundled scripts contains some options that can be easily adjusted near the top of the file.
+Make sure to rename the file if you do this, as otherwise your changes may be lost on updates.
+
 **While scripts run in an isolated environment, there is always a risk when running arbitrary code. Only use scripts
 from trusted sources**
 
 The path is interpreted relative to the BepInEx/config directory in your profile or as an absolute path.
-
-**An alternative script is bundled with the mod: `sort_sm.lua` - a reimplementation of
-the [ScrapMagic](https://thunderstore.io/c/lethal-company/p/KyleTheScientist/Scrap_Magic/) sorting layout**
 
 ### Other config values
 
@@ -56,13 +59,13 @@ Any arguments you pass to the `/sort` command are passed to the script.
   happens too often.
 - `Version conflict (...)`: The script was created for a different version of the mod, things may break.
   If it works fine, you can remove the `expect_version(...)` instruction in the script to remove the warning.
-- `... items couldn't be sorted`: Some positions were invalid, contact the creator about this and make sure to provide
+- `... items couldn't be sorted`: Some positions were invalid, contact the script creator about this and make sure to provide
   all error messages found in the game logs.
-- `Script error: ...`: The script failed to execute, contact the creator about this and make sure to provide the full
+- `Script error: ...`: The script failed to execute, contact the script creator about this and make sure to provide the full
   error message found in the game logs.
-- `Script compilation error: ...`: The script file contains an error, contact the creator about this and make sure to
+- `Script compilation error: ...`: The script file contains an error, contact the script creator about this and make sure to
   provide the full error message found in the game logs.
-- `Script result invalid: ...`: The script exited abnormally, contact the creator about this and make sure to provide
+- `Script result invalid: ...`: The script exited abnormally, contact the script creator about this and make sure to provide
   the full error message found in the game logs.
 
 ### Sub-commands
