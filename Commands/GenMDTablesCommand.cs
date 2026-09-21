@@ -41,7 +41,8 @@ public class GenMDTablesCommand : Command
                 ("Type", i => NoneIfEmpty($"`{i.GetType().Name}`")),
                 ("Scrap", i => SortAPI.ItemScrap(i).ToString()),
                 ("Large", i => SortAPI.ItemLarge(i).ToString()),
-                ("Argument", i => SortAPI.ItemArg(i).TypeToString())
+                ("Argument", i => SortAPI.ItemArg(i).TypeToString()),
+                ("Alternative Argument", i => SortAPI.ItemArg2(i).TypeToString())
             )
         );
 

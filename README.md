@@ -130,6 +130,7 @@ Each item definition is a table with the following values:
 - `large` (bool): Whether the item is two-handed
 - `arg` (object): Misc. value related to the item (amount of shells in a shotgun, whether a radar booster is enabled,
   see `SortAPI.ItemArg` for more details)
+- `arg2` (object): Alternative misc. value related to the item (shotgun safety, radar booster name, see `SortAPI.ItemArg2` for more details)
 - `index` (int): 1-based index of the item based on `name`
 - `count` (int): total amount of items with matching `name`
 
@@ -137,102 +138,102 @@ Each item definition is a table with the following values:
 
 _Last updated for v81_
 
-| Display name       | Name                     | Type                     | Scrap | Large | Argument |
-|--------------------|--------------------------|--------------------------|-------|-------|----------|
-| Airhorn            | `Airhorn`                | `NoisemakerProp`         | True  | False | nil      |
-| Ammo               | `ShotgunShell`           | `GunAmmo`                | False | False | nil      |
-| Apparatus          | `LungApparatusTurnedOff` | `LungProp`               | True  | True  | nil      |
-| Apparatus          | `LungApparatus`          | `LungProp`               | True  | True  | nil      |
-| Bell               | `HandBell`               | `EventWhenDroppedItem`   | True  | False | nil      |
-| Belt bag           | `BeltBagItem`            | `BeltBagItem`            | False | False | number   |
-| Big bolt           | `BigBolt`                | `PhysicsProp`            | True  | False | nil      |
-| Binoculars         | `Binoculars`             | `BinocularsItem`         | False | False | nil      |
-| Body               | `RagdollGrabbableObject` | `RagdollGrabbableObject` | True  | True  | nil      |
-| Bone               | `Bone`                   | `PhysicsProp`            | True  | False | nil      |
-| Boombox            | `Boombox`                | `BoomboxItem`            | False | False | nil      |
-| Bottles            | `BinFullOfBottles`       | `PhysicsProp`            | True  | True  | nil      |
-| Brush              | `Hairbrush`              | `PhysicsProp`            | True  | False | nil      |
-| Candy              | `Candy`                  | `PhysicsProp`            | True  | False | nil      |
-| Cash register      | `CashRegisterItem`       | `NoisemakerProp`         | True  | True  | nil      |
-| Chemical jug       | `ChemicalJug`            | `PhysicsProp`            | True  | True  | nil      |
-| clipboard          | `CompanyCruiserManual`   | `ClipboardItem`          | False | False | nil      |
-| clipboard          | `ClipboardManual`        | `ClipboardItem`          | False | False | nil      |
-| Clock              | `Clock`                  | `ClockProp`              | True  | False | nil      |
-| Clown horn         | `Clownhorn`              | `NoisemakerProp`         | True  | False | nil      |
-| Comedy             | `ComedyMask`             | `HauntedMaskItem`        | True  | False | nil      |
-| Control pad        | `ControlPad`             | `PhysicsProp`            | True  | True  | nil      |
-| Cookie pan         | `CookieMoldPan`          | `PhysicsProp`            | True  | False | nil      |
-| Dust pan           | `Dustpan`                | `PhysicsProp`            | True  | False | nil      |
-| Ear                | `Ear`                    | `RandomFlyParticle`      | True  | False | nil      |
-| Easter egg         | `EasterEgg`              | `StunGrenadeItem`        | True  | False | boolean  |
-| Egg                | `KiwiBabyItem`           | `KiwiBabyItem`           | True  | True  | nil      |
-| Egg beater         | `EggBeater`              | `PhysicsProp`            | True  | False | nil      |
-| Extension ladder   | `ExtensionLadderItem`    | `ExtensionLadderItem`    | False | False | nil      |
-| Fancy lamp         | `FancyLamp`              | `PhysicsProp`            | True  | True  | nil      |
-| Flashlight         | `BBFlashlight`           | `FlashlightItem`         | False | False | nil      |
-| Flask              | `Flask`                  | `PhysicsProp`            | True  | False | nil      |
-| Foot               | `SeveredFootLOD0`        | `RandomFlyParticle`      | True  | False | nil      |
-| Garbage lid        | `GarbageLid`             | `PhysicsProp`            | True  | True  | nil      |
-| Gift               | `GiftBox`                | `GiftBoxItem`            | True  | False | nil      |
-| Gold bar           | `GoldBar`                | `PhysicsProp`            | True  | False | nil      |
-| Golden cup         | `FancyGlass`             | `PhysicsProp`            | True  | False | nil      |
-| Hairdryer          | `Hairdryer`              | `NoisemakerProp`         | True  | False | nil      |
-| Hand               | `SeveredHandLOD0`        | `RandomFlyParticle`      | True  | False | nil      |
-| Heart              | `HeartContainer`         | `PhysicsProp`            | True  | True  | nil      |
-| Hive               | `RedLocustHive`          | `PhysicsProp`            | True  | True  | nil      |
-| Homemade flashbang | `DiyFlashbang`           | `StunGrenadeItem`        | True  | False | boolean  |
-| Jar of pickles     | `PickleJar`              | `PhysicsProp`            | True  | False | nil      |
-| Jetpack            | `JetpackItem`            | `JetpackItem`            | False | False | boolean  |
-| Key                | `Key`                    | `KeyItem`                | False | False | nil      |
-| Kitchen knife      | `KnifeItem`              | `KnifeItem`              | True  | False | nil      |
-| Knee               | `SeveredThighLOD0`       | `RandomFlyParticle`      | True  | False | nil      |
-| Large axle         | `Cog`                    | `PhysicsProp`            | True  | True  | nil      |
-| Laser pointer      | `LaserPointer`           | `FlashlightItem`         | True  | False | nil      |
-| Lockpicker         | `LockPickerItem`         | `LockPicker`             | False | False | nil      |
-| Magic 7 ball       | `Magic7Ball`             | `PhysicsProp`            | True  | False | nil      |
-| Magnifying glass   | `MagnifyingGlass`        | `PhysicsProp`            | True  | False | nil      |
-| Maneater           | `CaveDwellerEnemy`       | `CaveDwellerPhysicsProp` | False | True  | nil      |
-| Mapper             | `MappingDevice`          | `MapDevice`              | False | False | nil      |
-| Metal sheet        | `MetalSheet`             | `PhysicsProp`            | True  | False | nil      |
-| Mug                | `Mug`                    | `PhysicsProp`            | True  | False | nil      |
-| Old phone          | `OldPhone`               | `AnimatedItem`           | True  | False | nil      |
-| Painting           | `Painting`               | `PhysicsProp`            | True  | True  | nil      |
-| Perfume bottle     | `PerfumeBottle`          | `PhysicsProp`            | True  | False | nil      |
-| Pill bottle        | `PillBottle`             | `PhysicsProp`            | True  | False | nil      |
-| Plastic cup        | `PlasticCup`             | `PhysicsProp`            | True  | False | nil      |
-| Plastic fish       | `FishTestProp`           | `PhysicsProp`            | True  | False | nil      |
-| Pro-flashlight     | `FlashlightItem`         | `FlashlightItem`         | False | False | nil      |
-| Radar-booster      | `RadarBoosterDevice`     | `RadarBoosterItem`       | False | False | boolean  |
-| Red soda           | `RedSodaCan`             | `PhysicsProp`            | True  | False | nil      |
-| Remote             | `Remote`                 | `RemoteProp`             | True  | False | nil      |
-| Ribcage            | `RibcageBone`            | `PhysicsProp`            | True  | True  | nil      |
-| Ring               | `FancyRing`              | `PhysicsProp`            | True  | False | nil      |
-| Rubber Ducky       | `RubberDucky`            | `AnimatedItem`           | True  | False | nil      |
-| Shotgun            | `ShotgunItem`            | `ShotgunItem`            | True  | False | number   |
-| Shovel             | `ShovelItem`             | `Shovel`                 | False | False | nil      |
-| Soccer ball        | `SoccerBall`             | `SoccerBallProp`         | True  | True  | nil      |
-| Spray paint        | `SprayPaintItem`         | `SprayPaintItem`         | False | False | number   |
-| Steering wheel     | `SteeringWheel`          | `PhysicsProp`            | True  | False | nil      |
-| Sticky note        | `StickyNoteItem`         | `PhysicsProp`            | False | False | nil      |
-| Stop sign          | `StopSign`               | `Shovel`                 | True  | False | nil      |
-| Stun grenade       | `StunGrenade`            | `StunGrenadeItem`        | False | False | boolean  |
-| Tea kettle         | `TeaKettle`              | `PhysicsProp`            | True  | False | nil      |
-| Teeth              | `Dentures`               | `AnimatedItem`           | True  | False | nil      |
-| Toilet paper       | `ToiletPaperRolls`       | `PhysicsProp`            | True  | True  | nil      |
-| Tongue             | `Tongue`                 | `AnimatedItem`           | True  | False | nil      |
-| Toothpaste         | `Toothpaste`             | `PhysicsProp`            | True  | False | nil      |
-| Toy cube           | `ToyCube`                | `PhysicsProp`            | True  | False | nil      |
-| Toy robot          | `RobotToy`               | `AnimatedItem`           | True  | False | nil      |
-| Toy train          | `ToyTrain`               | `AnimatedItem`           | True  | False | nil      |
-| Tragedy            | `TragedyMask`            | `HauntedMaskItem`        | True  | False | nil      |
-| TZP-Inhalant       | `TZPChemical`            | `TetraChemicalItem`      | False | False | number   |
-| V-type engine      | `EnginePart`             | `PhysicsProp`            | True  | True  | nil      |
-| Walkie-talkie      | `WalkieTalkie`           | `WalkieTalkie`           | False | False | nil      |
-| Weed killer        | `WeedKillerItem`         | `SprayPaintItem`         | False | False | number   |
-| Whoopie cushion    | `WhoopieCushion`         | `WhoopieCushionItem`     | True  | False | nil      |
-| Yield sign         | `YieldSign`              | `Shovel`                 | True  | False | nil      |
-| Zap gun            | `PatcherGunItem`         | `PatcherTool`            | False | False | nil      |
-| Zed Dog            | `ZeddogPlushie`          | `PhysicsProp`            | True  | False | nil      |
+| Display name       | Name                     | Type                     | Scrap | Large | Argument | Alternative Argument |
+|--------------------|--------------------------|--------------------------|-------|-------|----------|----------------------|
+| Airhorn            | `Airhorn`                | `NoisemakerProp`         | True  | False | nil      | nil                  |
+| Ammo               | `ShotgunShell`           | `GunAmmo`                | False | False | nil      | nil                  |
+| Apparatus          | `LungApparatusTurnedOff` | `LungProp`               | True  | True  | nil      | nil                  |
+| Apparatus          | `LungApparatus`          | `LungProp`               | True  | True  | nil      | nil                  |
+| Bell               | `HandBell`               | `EventWhenDroppedItem`   | True  | False | nil      | nil                  |
+| Belt bag           | `BeltBagItem`            | `BeltBagItem`            | False | False | number   | boolean              |
+| Big bolt           | `BigBolt`                | `PhysicsProp`            | True  | False | nil      | nil                  |
+| Binoculars         | `Binoculars`             | `BinocularsItem`         | False | False | nil      | nil                  |
+| Body               | `RagdollGrabbableObject` | `RagdollGrabbableObject` | True  | True  | nil      | nil                  |
+| Bone               | `Bone`                   | `PhysicsProp`            | True  | False | nil      | nil                  |
+| Boombox            | `Boombox`                | `BoomboxItem`            | False | False | nil      | nil                  |
+| Bottles            | `BinFullOfBottles`       | `PhysicsProp`            | True  | True  | nil      | nil                  |
+| Brush              | `Hairbrush`              | `PhysicsProp`            | True  | False | nil      | nil                  |
+| Candy              | `Candy`                  | `PhysicsProp`            | True  | False | nil      | nil                  |
+| Cash register      | `CashRegisterItem`       | `NoisemakerProp`         | True  | True  | nil      | nil                  |
+| Chemical jug       | `ChemicalJug`            | `PhysicsProp`            | True  | True  | nil      | nil                  |
+| clipboard          | `CompanyCruiserManual`   | `ClipboardItem`          | False | False | nil      | nil                  |
+| clipboard          | `ClipboardManual`        | `ClipboardItem`          | False | False | nil      | nil                  |
+| Clock              | `Clock`                  | `ClockProp`              | True  | False | nil      | nil                  |
+| Clown horn         | `Clownhorn`              | `NoisemakerProp`         | True  | False | nil      | nil                  |
+| Comedy             | `ComedyMask`             | `HauntedMaskItem`        | True  | False | nil      | nil                  |
+| Control pad        | `ControlPad`             | `PhysicsProp`            | True  | True  | nil      | nil                  |
+| Cookie pan         | `CookieMoldPan`          | `PhysicsProp`            | True  | False | nil      | nil                  |
+| Dust pan           | `Dustpan`                | `PhysicsProp`            | True  | False | nil      | nil                  |
+| Ear                | `Ear`                    | `RandomFlyParticle`      | True  | False | nil      | nil                  |
+| Easter egg         | `EasterEgg`              | `StunGrenadeItem`        | True  | False | boolean  | nil                  |
+| Egg                | `KiwiBabyItem`           | `KiwiBabyItem`           | True  | True  | nil      | nil                  |
+| Egg beater         | `EggBeater`              | `PhysicsProp`            | True  | False | nil      | nil                  |
+| Extension ladder   | `ExtensionLadderItem`    | `ExtensionLadderItem`    | False | False | nil      | nil                  |
+| Fancy lamp         | `FancyLamp`              | `PhysicsProp`            | True  | True  | nil      | nil                  |
+| Flashlight         | `BBFlashlight`           | `FlashlightItem`         | False | False | nil      | nil                  |
+| Flask              | `Flask`                  | `PhysicsProp`            | True  | False | nil      | nil                  |
+| Foot               | `SeveredFootLOD0`        | `RandomFlyParticle`      | True  | False | nil      | nil                  |
+| Garbage lid        | `GarbageLid`             | `PhysicsProp`            | True  | True  | nil      | nil                  |
+| Gift               | `GiftBox`                | `GiftBoxItem`            | True  | False | nil      | nil                  |
+| Gold bar           | `GoldBar`                | `PhysicsProp`            | True  | False | nil      | nil                  |
+| Golden cup         | `FancyGlass`             | `PhysicsProp`            | True  | False | nil      | nil                  |
+| Hairdryer          | `Hairdryer`              | `NoisemakerProp`         | True  | False | nil      | nil                  |
+| Hand               | `SeveredHandLOD0`        | `RandomFlyParticle`      | True  | False | nil      | nil                  |
+| Heart              | `HeartContainer`         | `PhysicsProp`            | True  | True  | nil      | nil                  |
+| Hive               | `RedLocustHive`          | `PhysicsProp`            | True  | True  | nil      | nil                  |
+| Homemade flashbang | `DiyFlashbang`           | `StunGrenadeItem`        | True  | False | boolean  | nil                  |
+| Jar of pickles     | `PickleJar`              | `PhysicsProp`            | True  | False | nil      | nil                  |
+| Jetpack            | `JetpackItem`            | `JetpackItem`            | False | False | boolean  | nil                  |
+| Key                | `Key`                    | `KeyItem`                | False | False | nil      | nil                  |
+| Kitchen knife      | `KnifeItem`              | `KnifeItem`              | True  | False | nil      | nil                  |
+| Knee               | `SeveredThighLOD0`       | `RandomFlyParticle`      | True  | False | nil      | nil                  |
+| Large axle         | `Cog`                    | `PhysicsProp`            | True  | True  | nil      | nil                  |
+| Laser pointer      | `LaserPointer`           | `FlashlightItem`         | True  | False | nil      | nil                  |
+| Lockpicker         | `LockPickerItem`         | `LockPicker`             | False | False | nil      | nil                  |
+| Magic 7 ball       | `Magic7Ball`             | `PhysicsProp`            | True  | False | nil      | nil                  |
+| Magnifying glass   | `MagnifyingGlass`        | `PhysicsProp`            | True  | False | nil      | nil                  |
+| Maneater           | `CaveDwellerEnemy`       | `CaveDwellerPhysicsProp` | False | True  | nil      | nil                  |
+| Mapper             | `MappingDevice`          | `MapDevice`              | False | False | nil      | nil                  |
+| Metal sheet        | `MetalSheet`             | `PhysicsProp`            | True  | False | nil      | nil                  |
+| Mug                | `Mug`                    | `PhysicsProp`            | True  | False | nil      | nil                  |
+| Old phone          | `OldPhone`               | `AnimatedItem`           | True  | False | nil      | nil                  |
+| Painting           | `Painting`               | `PhysicsProp`            | True  | True  | nil      | nil                  |
+| Perfume bottle     | `PerfumeBottle`          | `PhysicsProp`            | True  | False | nil      | nil                  |
+| Pill bottle        | `PillBottle`             | `PhysicsProp`            | True  | False | nil      | nil                  |
+| Plastic cup        | `PlasticCup`             | `PhysicsProp`            | True  | False | nil      | nil                  |
+| Plastic fish       | `FishTestProp`           | `PhysicsProp`            | True  | False | nil      | nil                  |
+| Pro-flashlight     | `FlashlightItem`         | `FlashlightItem`         | False | False | nil      | nil                  |
+| Radar-booster      | `RadarBoosterDevice`     | `RadarBoosterItem`       | False | False | boolean  | string               |
+| Red soda           | `RedSodaCan`             | `PhysicsProp`            | True  | False | nil      | nil                  |
+| Remote             | `Remote`                 | `RemoteProp`             | True  | False | nil      | nil                  |
+| Ribcage            | `RibcageBone`            | `PhysicsProp`            | True  | True  | nil      | nil                  |
+| Ring               | `FancyRing`              | `PhysicsProp`            | True  | False | nil      | nil                  |
+| Rubber Ducky       | `RubberDucky`            | `AnimatedItem`           | True  | False | nil      | nil                  |
+| Shotgun            | `ShotgunItem`            | `ShotgunItem`            | True  | False | number   | boolean              |
+| Shovel             | `ShovelItem`             | `Shovel`                 | False | False | nil      | nil                  |
+| Soccer ball        | `SoccerBall`             | `SoccerBallProp`         | True  | True  | nil      | nil                  |
+| Spray paint        | `SprayPaintItem`         | `SprayPaintItem`         | False | False | number   | nil                  |
+| Steering wheel     | `SteeringWheel`          | `PhysicsProp`            | True  | False | nil      | nil                  |
+| Sticky note        | `StickyNoteItem`         | `PhysicsProp`            | False | False | nil      | nil                  |
+| Stop sign          | `StopSign`               | `Shovel`                 | True  | False | nil      | nil                  |
+| Stun grenade       | `StunGrenade`            | `StunGrenadeItem`        | False | False | boolean  | nil                  |
+| Tea kettle         | `TeaKettle`              | `PhysicsProp`            | True  | False | nil      | nil                  |
+| Teeth              | `Dentures`               | `AnimatedItem`           | True  | False | nil      | nil                  |
+| Toilet paper       | `ToiletPaperRolls`       | `PhysicsProp`            | True  | True  | nil      | nil                  |
+| Tongue             | `Tongue`                 | `AnimatedItem`           | True  | False | nil      | nil                  |
+| Toothpaste         | `Toothpaste`             | `PhysicsProp`            | True  | False | nil      | nil                  |
+| Toy cube           | `ToyCube`                | `PhysicsProp`            | True  | False | nil      | nil                  |
+| Toy robot          | `RobotToy`               | `AnimatedItem`           | True  | False | nil      | nil                  |
+| Toy train          | `ToyTrain`               | `AnimatedItem`           | True  | False | nil      | nil                  |
+| Tragedy            | `TragedyMask`            | `HauntedMaskItem`        | True  | False | nil      | nil                  |
+| TZP-Inhalant       | `TZPChemical`            | `TetraChemicalItem`      | False | False | number   | nil                  |
+| V-type engine      | `EnginePart`             | `PhysicsProp`            | True  | True  | nil      | nil                  |
+| Walkie-talkie      | `WalkieTalkie`           | `WalkieTalkie`           | False | False | nil      | nil                  |
+| Weed killer        | `WeedKillerItem`         | `SprayPaintItem`         | False | False | number   | nil                  |
+| Whoopie cushion    | `WhoopieCushion`         | `WhoopieCushionItem`     | True  | False | nil      | nil                  |
+| Yield sign         | `YieldSign`              | `Shovel`                 | True  | False | nil      | nil                  |
+| Zap gun            | `PatcherGunItem`         | `PatcherTool`            | False | False | nil      | nil                  |
+| Zed Dog            | `ZeddogPlushie`          | `PhysicsProp`            | True  | False | nil      | nil                  |
 
 #### Moon definitions
 

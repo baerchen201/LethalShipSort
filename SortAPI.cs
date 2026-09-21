@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Lua;
 
 namespace LethalShipSort;
@@ -22,6 +23,7 @@ public static class SortAPI
     public const string ITEM_SCRAP = "scrap";
     public const string ITEM_LARGE = "large";
     public const string ITEM_ARG = "arg";
+    public const string ITEM_ARG2 = "arg2";
     public const string ITEM_VALUE = "value";
     public const string ITEM_TYPE_INDEX = "index";
     public const string ITEM_TYPE_COUNT = "count";
@@ -206,6 +208,24 @@ public static class SortAPI
         }
     }
 
+    public static LuaValue ItemArg2(GrabbableObject item)
+    {
+        switch (item)
+        {
+            case ShotgunItem shotgunItem:
+                return shotgunItem.safetyOn;
+
+            case RadarBoosterItem radarBoosterItem:
+                return radarBoosterItem.radarBoosterName;
+
+            case BeltBagItem beltBagItem:
+                return beltBagItem.objectsInBag.All(i => !ItemScrap(i));
+
+            default:
+                return new LuaValue();
+        }
+    }
+
     private struct _Item
     {
         public string Name;
@@ -214,6 +234,7 @@ public static class SortAPI
         public bool Scrap;
 
         public LuaValue Arg;
+        public LuaValue Arg2;
         public int Value;
 
         public int Index;
@@ -237,6 +258,7 @@ public static class SortAPI
                 Scrap = ItemScrap(item),
 
                 Arg = ItemArg(item),
+                Arg2 = ItemArg2(item),
                 Value = item.scrapValue,
 
                 Index = itemTypes.ContainsKey(name) ? ++itemTypes[name] : itemTypes[name] = 1,
@@ -255,6 +277,7 @@ public static class SortAPI
                 [ITEM_SCRAP] = item.Scrap,
                 [ITEM_LARGE] = item.Large,
                 [ITEM_ARG] = item.Arg,
+                [ITEM_ARG2] = item.Arg2,
                 [ITEM_VALUE] = item.Value,
                 [ITEM_TYPE_INDEX] = item.Index,
                 [ITEM_TYPE_COUNT] = itemTypes[item.Name],
