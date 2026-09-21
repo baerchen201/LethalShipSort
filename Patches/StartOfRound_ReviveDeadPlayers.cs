@@ -4,12 +4,12 @@ using UnityEngine;
 
 namespace LethalShipSort.Patches;
 
-[HarmonyPatch(typeof(RoundManager), nameof(RoundManager.DespawnPropsAtEndOfRound))]
-internal static class RoundManager_DespawnPropsAtEndOfRound
+[HarmonyPatch(typeof(StartOfRound), nameof(StartOfRound.ReviveDeadPlayers))]
+internal static class StartOfRound_ReviveDeadPlayers
 {
-    private static void Postfix(ref RoundManager __instance)
+    private static void Postfix(ref StartOfRound __instance)
     {
-        __instance.playersManager.StartCoroutine(DelayedAutoSort(__instance.playersManager));
+        __instance.StartCoroutine(DelayedAutoSort(__instance));
     }
 
     private static IEnumerator DelayedAutoSort(StartOfRound __instance)
