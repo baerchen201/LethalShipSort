@@ -392,8 +392,11 @@ public class LethalShipSort : BaseUnityPlugin
 
     public static bool FilterItem(GrabbableObject item, PlayerControllerB localPlayer)
     {
-        return (item.playerHeldBy != null && item.playerHeldBy == localPlayer)
-            || item is { isHeld: false, isPocketed: false }; // TODO: figure out something for belt bag (potentially add a patch that sets isPocketed on pickup/drop)
+        return item.targetFloorPosition.x != 3000f // item in belt bag - copied straight from StormyWeather.Update - TODO: fix: if a script places objects exactly at x 3000 they wont be sorted at all anymore
+            && (
+                item is { isHeld: false, isPocketed: false }
+                || (item.playerHeldBy != null && item.playerHeldBy == localPlayer)
+            );
     }
 
     internal static void TryAutoSort(StartOfRound sor)
